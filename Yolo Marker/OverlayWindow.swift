@@ -50,7 +50,7 @@ struct OverlayView: View {
       Color.clear
 
       // Draw bounding boxes
-      ForEach(tracker.sortedObjects) { object in
+      ForEach(tracker.trackedObjects) { object in
         let rect = calculateScreenRect(object.rect)
         let color = getColor(settings.getColorForClass(object.label))
           .opacity(object.alpha * settings.boundingBoxOpacity)
@@ -66,7 +66,7 @@ struct OverlayView: View {
           if settings.showLabels {
             // Find best label position that doesn't overlap with other boxes
             let labelPosition = findBestLabelPosition(
-              for: rect, avoiding: tracker.sortedObjects.map { calculateScreenRect($0.rect) })
+              for: rect, avoiding: tracker.trackedObjects.map { calculateScreenRect($0.rect) })
 
             Text("\(object.label) (\(Int(object.confidence * 100))%)")
               .font(.system(size: 12, weight: .bold))
