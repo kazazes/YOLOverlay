@@ -12,6 +12,22 @@
 		0F3EE7B92D40F90900A1CBC2 /* yolov8l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7B22D40F90900A1CBC2 /* yolov8l.mlpackage */; };
 		0F3EE7BA2D40F90900A1CBC2 /* yolo11l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7AE2D40F90900A1CBC2 /* yolo11l.mlpackage */; };
 		0F3EE7F82D41407400A1CBC2 /* yolo11x.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7F72D41407400A1CBC2 /* yolo11x.mlpackage */; };
+		0F3EE8342D414C5500A1CBC2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0F3EE8242D414C5500A1CBC2 /* Assets.xcassets */; };
+		0F3EE8352D414C5500A1CBC2 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0F3EE8212D414C5500A1CBC2 /* Preview Assets.xcassets */; };
+		0F3EE8362D414C5600A1CBC2 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8232D414C5500A1CBC2 /* AppDelegate.swift */; };
+		0F3EE8372D414C5600A1CBC2 /* LogManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8272D414C5500A1CBC2 /* LogManager.swift */; };
+		0F3EE8382D414C5600A1CBC2 /* Yolo_MarkerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8312D414C5500A1CBC2 /* Yolo_MarkerApp.swift */; };
+		0F3EE8392D414C5600A1CBC2 /* ScreenCaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE82D2D414C5500A1CBC2 /* ScreenCaptureManager.swift */; };
+		0F3EE83A2D414C5600A1CBC2 /* BoundingBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8252D414C5500A1CBC2 /* BoundingBoxView.swift */; };
+		0F3EE83B2D414C5600A1CBC2 /* ObjectTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE82A2D414C5500A1CBC2 /* ObjectTracker.swift */; };
+		0F3EE83C2D414C5600A1CBC2 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE82E2D414C5500A1CBC2 /* Settings.swift */; };
+		0F3EE83D2D414C5600A1CBC2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8262D414C5500A1CBC2 /* ContentView.swift */; };
+		0F3EE83E2D414C5600A1CBC2 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE82C2D414C5500A1CBC2 /* PreferencesView.swift */; };
+		0F3EE83F2D414C5600A1CBC2 /* OverlayWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE82B2D414C5500A1CBC2 /* OverlayWindow.swift */; };
+		0F3EE8402D414C5600A1CBC2 /* StatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE82F2D414C5500A1CBC2 /* StatsManager.swift */; };
+		0F3EE8412D414C5600A1CBC2 /* LogWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8282D414C5500A1CBC2 /* LogWindow.swift */; };
+		0F3EE8422D414C5600A1CBC2 /* YOLOModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8322D414C5500A1CBC2 /* YOLOModelManager.swift */; };
+		0F3EE8432D414C5600A1CBC2 /* LogWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8292D414C5500A1CBC2 /* LogWindowController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,30 +48,42 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		0F3EE7632D40E13F00A1CBC2 /* Yolo Marker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Yolo Marker.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		0F3EE7742D40E14000A1CBC2 /* Yolo MarkerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Yolo MarkerTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		0F3EE77E2D40E14000A1CBC2 /* Yolo MarkerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Yolo MarkerUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		0F3EE7632D40E13F00A1CBC2 /* YOLOverlay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YOLOverlay.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0F3EE7742D40E14000A1CBC2 /* YOLOverlayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YOLOverlayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		0F3EE77E2D40E14000A1CBC2 /* YOLOverlayUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YOLOverlayUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0F3EE7AE2D40F90900A1CBC2 /* yolo11l.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11l.mlpackage; sourceTree = "<group>"; };
 		0F3EE7B02D40F90900A1CBC2 /* yolo11s.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11s.mlpackage; sourceTree = "<group>"; };
 		0F3EE7B22D40F90900A1CBC2 /* yolov8l.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8l.mlpackage; sourceTree = "<group>"; };
 		0F3EE7B42D40F90900A1CBC2 /* yolov8x.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8x.mlpackage; sourceTree = "<group>"; };
 		0F3EE7F72D41407400A1CBC2 /* yolo11x.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11x.mlpackage; sourceTree = "<group>"; };
+		0F3EE8212D414C5500A1CBC2 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		0F3EE8232D414C5500A1CBC2 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		0F3EE8242D414C5500A1CBC2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		0F3EE8252D414C5500A1CBC2 /* BoundingBoxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoundingBoxView.swift; sourceTree = "<group>"; };
+		0F3EE8262D414C5500A1CBC2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		0F3EE8272D414C5500A1CBC2 /* LogManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogManager.swift; sourceTree = "<group>"; };
+		0F3EE8282D414C5500A1CBC2 /* LogWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogWindow.swift; sourceTree = "<group>"; };
+		0F3EE8292D414C5500A1CBC2 /* LogWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogWindowController.swift; sourceTree = "<group>"; };
+		0F3EE82A2D414C5500A1CBC2 /* ObjectTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectTracker.swift; sourceTree = "<group>"; };
+		0F3EE82B2D414C5500A1CBC2 /* OverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayWindow.swift; sourceTree = "<group>"; };
+		0F3EE82C2D414C5500A1CBC2 /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
+		0F3EE82D2D414C5500A1CBC2 /* ScreenCaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCaptureManager.swift; sourceTree = "<group>"; };
+		0F3EE82E2D414C5500A1CBC2 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		0F3EE82F2D414C5500A1CBC2 /* StatsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsManager.swift; sourceTree = "<group>"; };
+		0F3EE8302D414C5500A1CBC2 /* YOLOverlay.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YOLOverlay.entitlements; sourceTree = "<group>"; };
+		0F3EE8312D414C5500A1CBC2 /* Yolo_MarkerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Yolo_MarkerApp.swift; sourceTree = "<group>"; };
+		0F3EE8322D414C5500A1CBC2 /* YOLOModelManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YOLOModelManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		0F3EE7652D40E13F00A1CBC2 /* Yolo Marker */ = {
+		0F3EE7772D40E14000A1CBC2 /* YOLOverlayTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Yolo Marker";
+			path = YOLOverlayTests;
 			sourceTree = "<group>";
 		};
-		0F3EE7772D40E14000A1CBC2 /* Yolo MarkerTests */ = {
+		0F3EE7812D40E14000A1CBC2 /* YOLOverlayUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Yolo MarkerTests";
-			sourceTree = "<group>";
-		};
-		0F3EE7812D40E14000A1CBC2 /* Yolo MarkerUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Yolo MarkerUITests";
+			path = YOLOverlayUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -88,10 +116,10 @@
 		0F3EE75A2D40E13F00A1CBC2 = {
 			isa = PBXGroup;
 			children = (
+				0F3EE8332D414C5500A1CBC2 /* YOLOverlay */,
 				0F3EE7B62D40F90900A1CBC2 /* ultralytics */,
-				0F3EE7652D40E13F00A1CBC2 /* Yolo Marker */,
-				0F3EE7772D40E14000A1CBC2 /* Yolo MarkerTests */,
-				0F3EE7812D40E14000A1CBC2 /* Yolo MarkerUITests */,
+				0F3EE7772D40E14000A1CBC2 /* YOLOverlayTests */,
+				0F3EE7812D40E14000A1CBC2 /* YOLOverlayUITests */,
 				0F3EE7642D40E13F00A1CBC2 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -99,9 +127,9 @@
 		0F3EE7642D40E13F00A1CBC2 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				0F3EE7632D40E13F00A1CBC2 /* Yolo Marker.app */,
-				0F3EE7742D40E14000A1CBC2 /* Yolo MarkerTests.xctest */,
-				0F3EE77E2D40E14000A1CBC2 /* Yolo MarkerUITests.xctest */,
+				0F3EE7632D40E13F00A1CBC2 /* YOLOverlay.app */,
+				0F3EE7742D40E14000A1CBC2 /* YOLOverlayTests.xctest */,
+				0F3EE77E2D40E14000A1CBC2 /* YOLOverlayUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -118,12 +146,44 @@
 			path = ultralytics;
 			sourceTree = "<group>";
 		};
+		0F3EE8222D414C5500A1CBC2 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				0F3EE8212D414C5500A1CBC2 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		0F3EE8332D414C5500A1CBC2 /* YOLOverlay */ = {
+			isa = PBXGroup;
+			children = (
+				0F3EE8222D414C5500A1CBC2 /* Preview Content */,
+				0F3EE8232D414C5500A1CBC2 /* AppDelegate.swift */,
+				0F3EE8242D414C5500A1CBC2 /* Assets.xcassets */,
+				0F3EE8252D414C5500A1CBC2 /* BoundingBoxView.swift */,
+				0F3EE8262D414C5500A1CBC2 /* ContentView.swift */,
+				0F3EE8272D414C5500A1CBC2 /* LogManager.swift */,
+				0F3EE8282D414C5500A1CBC2 /* LogWindow.swift */,
+				0F3EE8292D414C5500A1CBC2 /* LogWindowController.swift */,
+				0F3EE82A2D414C5500A1CBC2 /* ObjectTracker.swift */,
+				0F3EE82B2D414C5500A1CBC2 /* OverlayWindow.swift */,
+				0F3EE82C2D414C5500A1CBC2 /* PreferencesView.swift */,
+				0F3EE82D2D414C5500A1CBC2 /* ScreenCaptureManager.swift */,
+				0F3EE82E2D414C5500A1CBC2 /* Settings.swift */,
+				0F3EE82F2D414C5500A1CBC2 /* StatsManager.swift */,
+				0F3EE8302D414C5500A1CBC2 /* YOLOverlay.entitlements */,
+				0F3EE8312D414C5500A1CBC2 /* Yolo_MarkerApp.swift */,
+				0F3EE8322D414C5500A1CBC2 /* YOLOModelManager.swift */,
+			);
+			path = YOLOverlay;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		0F3EE7622D40E13F00A1CBC2 /* Yolo Marker */ = {
+		0F3EE7622D40E13F00A1CBC2 /* YOLOverlay */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 0F3EE7882D40E14000A1CBC2 /* Build configuration list for PBXNativeTarget "Yolo Marker" */;
+			buildConfigurationList = 0F3EE7882D40E14000A1CBC2 /* Build configuration list for PBXNativeTarget "YOLOverlay" */;
 			buildPhases = (
 				0F3EE75F2D40E13F00A1CBC2 /* Sources */,
 				0F3EE7602D40E13F00A1CBC2 /* Frameworks */,
@@ -133,19 +193,16 @@
 			);
 			dependencies = (
 			);
-			fileSystemSynchronizedGroups = (
-				0F3EE7652D40E13F00A1CBC2 /* Yolo Marker */,
-			);
-			name = "Yolo Marker";
+			name = YOLOverlay;
 			packageProductDependencies = (
 			);
 			productName = "Yolo Marker";
-			productReference = 0F3EE7632D40E13F00A1CBC2 /* Yolo Marker.app */;
+			productReference = 0F3EE7632D40E13F00A1CBC2 /* YOLOverlay.app */;
 			productType = "com.apple.product-type.application";
 		};
-		0F3EE7732D40E14000A1CBC2 /* Yolo MarkerTests */ = {
+		0F3EE7732D40E14000A1CBC2 /* YOLOverlayTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 0F3EE78B2D40E14000A1CBC2 /* Build configuration list for PBXNativeTarget "Yolo MarkerTests" */;
+			buildConfigurationList = 0F3EE78B2D40E14000A1CBC2 /* Build configuration list for PBXNativeTarget "YOLOverlayTests" */;
 			buildPhases = (
 				0F3EE7702D40E14000A1CBC2 /* Sources */,
 				0F3EE7712D40E14000A1CBC2 /* Frameworks */,
@@ -157,18 +214,18 @@
 				0F3EE7762D40E14000A1CBC2 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				0F3EE7772D40E14000A1CBC2 /* Yolo MarkerTests */,
+				0F3EE7772D40E14000A1CBC2 /* YOLOverlayTests */,
 			);
-			name = "Yolo MarkerTests";
+			name = YOLOverlayTests;
 			packageProductDependencies = (
 			);
 			productName = "Yolo MarkerTests";
-			productReference = 0F3EE7742D40E14000A1CBC2 /* Yolo MarkerTests.xctest */;
+			productReference = 0F3EE7742D40E14000A1CBC2 /* YOLOverlayTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		0F3EE77D2D40E14000A1CBC2 /* Yolo MarkerUITests */ = {
+		0F3EE77D2D40E14000A1CBC2 /* YOLOverlayUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 0F3EE78E2D40E14000A1CBC2 /* Build configuration list for PBXNativeTarget "Yolo MarkerUITests" */;
+			buildConfigurationList = 0F3EE78E2D40E14000A1CBC2 /* Build configuration list for PBXNativeTarget "YOLOverlayUITests" */;
 			buildPhases = (
 				0F3EE77A2D40E14000A1CBC2 /* Sources */,
 				0F3EE77B2D40E14000A1CBC2 /* Frameworks */,
@@ -180,13 +237,13 @@
 				0F3EE7802D40E14000A1CBC2 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				0F3EE7812D40E14000A1CBC2 /* Yolo MarkerUITests */,
+				0F3EE7812D40E14000A1CBC2 /* YOLOverlayUITests */,
 			);
-			name = "Yolo MarkerUITests";
+			name = YOLOverlayUITests;
 			packageProductDependencies = (
 			);
 			productName = "Yolo MarkerUITests";
-			productReference = 0F3EE77E2D40E14000A1CBC2 /* Yolo MarkerUITests.xctest */;
+			productReference = 0F3EE77E2D40E14000A1CBC2 /* YOLOverlayUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -212,7 +269,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 0F3EE75E2D40E13F00A1CBC2 /* Build configuration list for PBXProject "Yolo Marker" */;
+			buildConfigurationList = 0F3EE75E2D40E13F00A1CBC2 /* Build configuration list for PBXProject "YOLOverlay" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -226,9 +283,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				0F3EE7622D40E13F00A1CBC2 /* Yolo Marker */,
-				0F3EE7732D40E14000A1CBC2 /* Yolo MarkerTests */,
-				0F3EE77D2D40E14000A1CBC2 /* Yolo MarkerUITests */,
+				0F3EE7622D40E13F00A1CBC2 /* YOLOverlay */,
+				0F3EE7732D40E14000A1CBC2 /* YOLOverlayTests */,
+				0F3EE77D2D40E14000A1CBC2 /* YOLOverlayUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -238,6 +295,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0F3EE8342D414C5500A1CBC2 /* Assets.xcassets in Resources */,
+				0F3EE8352D414C5500A1CBC2 /* Preview Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -265,6 +324,20 @@
 				0F3EE7B72D40F90900A1CBC2 /* yolo11s.mlpackage in Sources */,
 				0F3EE7B82D40F90900A1CBC2 /* yolov8x.mlpackage in Sources */,
 				0F3EE7B92D40F90900A1CBC2 /* yolov8l.mlpackage in Sources */,
+				0F3EE8362D414C5600A1CBC2 /* AppDelegate.swift in Sources */,
+				0F3EE8372D414C5600A1CBC2 /* LogManager.swift in Sources */,
+				0F3EE8382D414C5600A1CBC2 /* Yolo_MarkerApp.swift in Sources */,
+				0F3EE8392D414C5600A1CBC2 /* ScreenCaptureManager.swift in Sources */,
+				0F3EE83A2D414C5600A1CBC2 /* BoundingBoxView.swift in Sources */,
+				0F3EE83B2D414C5600A1CBC2 /* ObjectTracker.swift in Sources */,
+				0F3EE83C2D414C5600A1CBC2 /* Settings.swift in Sources */,
+				0F3EE83D2D414C5600A1CBC2 /* ContentView.swift in Sources */,
+				0F3EE83E2D414C5600A1CBC2 /* PreferencesView.swift in Sources */,
+				0F3EE83F2D414C5600A1CBC2 /* OverlayWindow.swift in Sources */,
+				0F3EE8402D414C5600A1CBC2 /* StatsManager.swift in Sources */,
+				0F3EE8412D414C5600A1CBC2 /* LogWindow.swift in Sources */,
+				0F3EE8422D414C5600A1CBC2 /* YOLOModelManager.swift in Sources */,
+				0F3EE8432D414C5600A1CBC2 /* LogWindowController.swift in Sources */,
 				0F3EE7F82D41407400A1CBC2 /* yolo11x.mlpackage in Sources */,
 				0F3EE7BA2D40F90900A1CBC2 /* yolo11l.mlpackage in Sources */,
 			);
@@ -289,12 +362,12 @@
 /* Begin PBXTargetDependency section */
 		0F3EE7762D40E14000A1CBC2 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 0F3EE7622D40E13F00A1CBC2 /* Yolo Marker */;
+			target = 0F3EE7622D40E13F00A1CBC2 /* YOLOverlay */;
 			targetProxy = 0F3EE7752D40E14000A1CBC2 /* PBXContainerItemProxy */;
 		};
 		0F3EE7802D40E14000A1CBC2 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 0F3EE7622D40E13F00A1CBC2 /* Yolo Marker */;
+			target = 0F3EE7622D40E13F00A1CBC2 /* YOLOverlay */;
 			targetProxy = 0F3EE77F2D40E14000A1CBC2 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -423,11 +496,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "Yolo Marker/Yolo_Marker.entitlements";
+				CODE_SIGN_ENTITLEMENTS = YOLOVerlay/YOLOverlay.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"Yolo Marker/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"YOLOverlay/Preview Content\"";
 				DEVELOPMENT_TEAM = G69P92F3KV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -450,11 +523,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "Yolo Marker/Yolo_Marker.entitlements";
+				CODE_SIGN_ENTITLEMENTS = YOLOVerlay/YOLOverlay.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"Yolo Marker/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"YOLOverlay/Preview Content\"";
 				DEVELOPMENT_TEAM = G69P92F3KV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -486,7 +559,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Yolo Marker.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Yolo Marker";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YOLOverlay.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/YOLOverlay";
 			};
 			name = Debug;
 		};
@@ -504,7 +577,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Yolo Marker.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Yolo Marker";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YOLOverlay.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/YOLOverlay";
 			};
 			name = Release;
 		};
@@ -543,7 +616,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		0F3EE75E2D40E13F00A1CBC2 /* Build configuration list for PBXProject "Yolo Marker" */ = {
+		0F3EE75E2D40E13F00A1CBC2 /* Build configuration list for PBXProject "YOLOverlay" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				0F3EE7862D40E14000A1CBC2 /* Debug */,
@@ -552,7 +625,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		0F3EE7882D40E14000A1CBC2 /* Build configuration list for PBXNativeTarget "Yolo Marker" */ = {
+		0F3EE7882D40E14000A1CBC2 /* Build configuration list for PBXNativeTarget "YOLOverlay" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				0F3EE7892D40E14000A1CBC2 /* Debug */,
@@ -561,7 +634,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		0F3EE78B2D40E14000A1CBC2 /* Build configuration list for PBXNativeTarget "Yolo MarkerTests" */ = {
+		0F3EE78B2D40E14000A1CBC2 /* Build configuration list for PBXNativeTarget "YOLOverlayTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				0F3EE78C2D40E14000A1CBC2 /* Debug */,
@@ -570,7 +643,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		0F3EE78E2D40E14000A1CBC2 /* Build configuration list for PBXNativeTarget "Yolo MarkerUITests" */ = {
+		0F3EE78E2D40E14000A1CBC2 /* Build configuration list for PBXNativeTarget "YOLOverlayUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				0F3EE78F2D40E14000A1CBC2 /* Debug */,
