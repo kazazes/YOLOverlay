@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		0F3EE79B2D40E77900A1CBC2 /* yolov8n.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7952D40E4F500A1CBC2 /* yolov8n.mlpackage */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		0F3EE7752D40E14000A1CBC2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		0F3EE7632D40E13F00A1CBC2 /* Yolo Marker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Yolo Marker.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0F3EE7742D40E14000A1CBC2 /* Yolo MarkerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Yolo MarkerTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0F3EE77E2D40E14000A1CBC2 /* Yolo MarkerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Yolo MarkerUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		0F3EE7952D40E4F500A1CBC2 /* yolov8n.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8n.mlpackage; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -79,6 +84,7 @@
 				0F3EE7772D40E14000A1CBC2 /* Yolo MarkerTests */,
 				0F3EE7812D40E14000A1CBC2 /* Yolo MarkerUITests */,
 				0F3EE7642D40E13F00A1CBC2 /* Products */,
+				0F3EE7952D40E4F500A1CBC2 /* yolov8n.mlpackage */,
 			);
 			sourceTree = "<group>";
 		};
@@ -236,6 +242,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0F3EE79B2D40E77900A1CBC2 /* yolov8n.mlpackage in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
