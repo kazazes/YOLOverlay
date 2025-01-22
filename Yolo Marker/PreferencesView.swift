@@ -8,6 +8,33 @@ struct PreferencesView: View {
       // Left side - Settings
       VStack(spacing: 0) {
         List {
+          Section("Model Selection") {
+            VStack(alignment: .leading, spacing: 8) {
+              Picker("Model", selection: $settings.modelName) {
+                ForEach(settings.availableModels) { model in
+                  HStack {
+                    VStack(alignment: .leading) {
+                      Text(model.displayName)
+                        .font(.headline)
+                      Text(model.description)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    }
+                  }
+                  .tag(model.name)
+                }
+              }
+              .pickerStyle(.inline)
+
+              if settings.availableModels.isEmpty {
+                Text("No models available. Use convert_yolo.py to add models.")
+                  .font(.caption)
+                  .foregroundColor(.secondary)
+              }
+            }
+            .listRowInsets(EdgeInsets())
+          }
+
           Section("Model Information") {
             VStack(alignment: .leading, spacing: 8) {
               Text("Model: \(settings.modelName)")
@@ -54,8 +81,7 @@ struct PreferencesView: View {
                 Text("Default Color")
                 Spacer()
                 Picker("", selection: $settings.boundingBoxColor) {
-                  ForEach(["red", "blue", "green", "yellow", "orange", "purple"], id: \.self) {
-                    color in
+                  ForEach(Settings.availableColors, id: \.self) { color in
                     HStack {
                       Circle()
                         .fill(getColor(color))
@@ -130,6 +156,12 @@ struct PreferencesView: View {
     case "yellow": return .yellow
     case "orange": return .orange
     case "purple": return .purple
+    case "pink": return .pink
+    case "teal": return .teal
+    case "indigo": return .indigo
+    case "mint": return .mint
+    case "brown": return .brown
+    case "cyan": return .cyan
     default: return .red
     }
   }

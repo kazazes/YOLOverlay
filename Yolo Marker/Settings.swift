@@ -2,11 +2,6 @@ import Foundation
 import SwiftUI
 
 class Settings: ObservableObject {
-  static let availableColors = [
-    "red", "orange", "yellow", "green", "mint", "teal", "cyan", "blue",
-    "indigo", "purple", "pink", "brown", "gray",
-  ]
-
   @Published var targetFPS: Double {
     didSet {
       UserDefaults.standard.set(targetFPS, forKey: "targetFPS")
@@ -39,14 +34,26 @@ class Settings: ObservableObject {
   }
 
   // Model information
-  @Published var modelName: String = ""
+  @Published var modelName: String = "" {
+    didSet {
+      UserDefaults.standard.set(modelName, forKey: "selectedModel")
+      NotificationCenter.default.post(name: .modelChanged, object: nil)
+    }
+  }
   @Published var modelDescription: String = ""
   @Published var modelClasses: [String] = []
   @Published var classColors: [String: String] = [:]
+  @Published var availableModels: [YOLOModel] = []
 
   private(set) var minimumFrameInterval: TimeInterval
 
   static let shared = Settings()
+
+  // Available colors for class detection
+  static let availableColors = [
+    "red", "blue", "green", "yellow", "orange", "purple",
+    "pink", "teal", "indigo", "mint", "brown", "cyan",
+  ]
 
   private init() {
     // Initialize stored properties first
@@ -67,6 +74,54 @@ class Settings: ObservableObject {
       as? [String: String]
     {
       self.classColors = savedColors
+    }
+
+    // Load available models
+    self.loadAvailableModels()
+
+    // Set selected model
+    if let savedModel = UserDefaults.standard.string(forKey: "selectedModel") {
+      self.modelName = savedModel
+    } else {
+      self.modelName = "yolov8n"  // Default model
+    }
+  }
+
+  func loadAvailableModels() {
+    let versions = [
+      ("v8", "YOLOv8"),
+      ("11", "YOLO11"),
+    ]
+    let sizes = [
+      ("n", "Nano", "Fastest, smallest model"),
+      ("s", "Small", "Balanced speed and accuracy"),
+      ("m", "Medium", "Better accuracy, medium speed"),
+      ("l", "Large", "High accuracy, slower speed"),
+      ("x", "XLarge", "Highest accuracy, slowest speed"),
+    ]
+
+    var models: [YOLOModel] = []
+
+    // Generate all possible model combinations
+    for (version, versionName) in versions {
+      for (size, sizeName, description) in sizes {
+        let name = version == "11" ? "yolo11\(size)" : "yolov8\(size)"
+        let displayName = "\(versionName) \(sizeName)"
+        models.append(
+          YOLOModel(
+            name: name,
+            displayName: displayName,
+            description: description
+          ))
+      }
+    }
+
+    // Filter to only include models that exist in the bundle
+    availableModels = models.filter { model in
+      let formats = ["mlpackage", "mlmodelc"]
+      return formats.contains { format in
+        Bundle.main.url(forResource: model.name, withExtension: format) != nil
+      }
     }
   }
 
@@ -89,6 +144,19 @@ class Settings: ObservableObject {
   func getColorForClass(_ className: String) -> String {
     return classColors[className] ?? boundingBoxColor
   }
+}
+
+// Model structure
+struct YOLOModel: Identifiable {
+  let id = UUID()
+  let name: String
+  let displayName: String
+  let description: String
+}
+
+// Notification for model changes
+extension Notification.Name {
+  static let modelChanged = Notification.Name("modelChanged")
 }
 
 // Helper extensions
