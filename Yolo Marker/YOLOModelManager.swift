@@ -106,6 +106,54 @@ class YOLOModelManager {
       let mlModel = try await MLModel.load(contentsOf: modelURL, configuration: config)
       LogManager.shared.info("Successfully loaded MLModel")
 
+      // Extract model metadata
+      let modelName = modelURL.deletingPathExtension().lastPathComponent
+      let modelDescription = mlModel.modelDescription
+
+      // Get model description and version
+      let description = modelDescription.metadata[.description] as? String ?? ""
+      let version =
+        modelDescription.metadata[MLModelMetadataKey(rawValue: "MLModelVersionStringKey")]
+        as? String ?? ""
+      let license =
+        modelDescription.metadata[MLModelMetadataKey(rawValue: "MLModelLicenseKey")] as? String
+        ?? ""
+      let author =
+        modelDescription.metadata[MLModelMetadataKey(rawValue: "MLModelAuthorKey")] as? String ?? ""
+
+      // Extract class labels directly from model description
+      let classLabels = modelDescription.classLabels as? [String] ?? []
+
+      // Extract additional metadata from creator defined key
+      let creatorMetadata =
+        modelDescription.metadata[MLModelMetadataKey(rawValue: "MLModelCreatorDefinedKey")]
+        as? [String: Any]
+      let confidenceThreshold = creatorMetadata?["Confidence threshold"] as? String ?? "0.25"
+      let iouThreshold = creatorMetadata?["IoU threshold"] as? String ?? "0.45"
+      let task = creatorMetadata?["task"] as? String ?? "detect"
+      let imageSize = creatorMetadata?["imgsz"] as? String ?? "[640, 640]"
+
+      // Create rich model info
+      let modelInfo = """
+        Version: \(version)
+        Author: \(author)
+        License: \(license)
+        Task: \(task)
+        Image Size: \(imageSize)
+        Default Confidence: \(confidenceThreshold)
+        Default IoU: \(iouThreshold)
+        """
+
+      // Update Settings with model info
+      await MainActor.run {
+        Settings.shared.updateModelInfo(
+          name: modelName,
+          description: description,
+          classes: classLabels,
+          metadata: modelInfo
+        )
+      }
+
       do {
         let model = try VNCoreMLModel(for: mlModel)
         LogManager.shared.info("Successfully created VNCoreMLModel")
@@ -147,7 +195,7 @@ class YOLOModelManager {
   }
 
   private func processDetectionResults(_ request: VNRequest) {
-    guard let detectionRequest = detectionRequest else {
+    guard detectionRequest != nil else {
       LogManager.shared.error("Detection request not initialized")
       return
     }

@@ -7,47 +7,72 @@ struct PreferencesView: View {
 
   var body: some View {
     NavigationSplitView(columnVisibility: .constant(.all)) {
-      // Sidebar
-      List(selection: $selectedTab) {
-        Text("Model").tag("Model")
-        Text("Performance").tag("Performance")
-        Text("Appearance").tag("Appearance")
-        Text("Classes").tag("Classes")
-        Text("Citation").tag("Citation")
-      }
-      .listStyle(.sidebar)
+      PreferencesSidebar(selectedTab: $selectedTab)
     } detail: {
-      // Detail View
-      ScrollView {
-        VStack(alignment: .leading, spacing: 20) {
-          switch selectedTab {
-          case "Model":
-            ModelSettingsView(settings: settings)
-          case "Performance":
-            PerformanceSettingsView(settings: settings)
-          case "Appearance":
-            AppearanceSettingsView(settings: settings)
-          case "Classes":
-            ClassesView(settings: settings)
-          case "Citation":
-            CitationView()
-          default:
-            EmptyView()
-          }
-        }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-      }
-      .toolbar {
-        Button(action: toggleCapture) {
-          Label(
-            captureManager.isRecording ? "Stop Detection" : "Start Detection",
-            systemImage: captureManager.isRecording ? "stop.circle" : "play.circle"
-          )
-        }
-        .help(captureManager.isRecording ? "Stop object detection" : "Start object detection")
-      }
+      PreferencesDetail(
+        selectedTab: selectedTab, settings: settings, captureManager: captureManager)
     }
+  }
+}
+
+// MARK: - Sidebar
+private struct PreferencesSidebar: View {
+  @Binding var selectedTab: String
+
+  var body: some View {
+    List(selection: $selectedTab) {
+      Text("Model").tag("Model")
+      Text("Performance").tag("Performance")
+      Text("Appearance").tag("Appearance")
+      Text("Citation").tag("Citation")
+    }
+    .listStyle(.sidebar)
+  }
+}
+
+// MARK: - Detail View
+private struct PreferencesDetail: View {
+  let selectedTab: String
+  @ObservedObject var settings: Settings
+  @ObservedObject var captureManager: ScreenCaptureManager
+
+  var body: some View {
+    ScrollView {
+      VStack(alignment: .leading, spacing: 20) {
+        switch selectedTab {
+        case "Model":
+          ModelSettingsView(settings: settings)
+        case "Performance":
+          PerformanceSettingsView(settings: settings)
+        case "Appearance":
+          AppearanceSettingsView(settings: settings)
+        case "Citation":
+          CitationView()
+        default:
+          EmptyView()
+        }
+      }
+      .padding()
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+    .toolbar {
+      CaptureButton(captureManager: captureManager)
+    }
+  }
+}
+
+// MARK: - Capture Button
+private struct CaptureButton: View {
+  @ObservedObject var captureManager: ScreenCaptureManager
+
+  var body: some View {
+    Button(action: toggleCapture) {
+      Label(
+        captureManager.isRecording ? "Stop Detection" : "Start Detection",
+        systemImage: captureManager.isRecording ? "stop.circle" : "play.circle"
+      )
+    }
+    .help(captureManager.isRecording ? "Stop object detection" : "Start object detection")
   }
 
   private func toggleCapture() {
@@ -61,40 +86,80 @@ struct PreferencesView: View {
   }
 }
 
+
+// MARK: - Detected Classes Grid
+private struct DetectedClassesGrid: View {
+  let classes: [String]
+
+  var body: some View {
+    GroupBox("Detected Classes (\(classes.count))") {
+      if classes.isEmpty {
+        Text("No classes available")
+          .foregroundColor(.secondary)
+          .padding()
+      } else {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], spacing: 8) {
+          ForEach(classes, id: \.self) { className in
+            HStack(spacing: 4) {
+              Circle()
+                .fill(generateRandomColor())
+                .frame(width: 8, height: 8)
+              Text(className)
+                .font(.system(size: 12))
+            }
+            .padding(.vertical, 4)
+            .padding(.horizontal, 8)
+            .background(Color(.controlBackgroundColor))
+            .cornerRadius(4)
+          }
+        }
+        .padding(8)
+      }
+    }
+  }
+
+  private func generateRandomColor() -> Color {
+    Color(
+      red: Double.random(in: 0.5...1.0),
+      green: Double.random(in: 0.5...1.0),
+      blue: Double.random(in: 0.5...1.0)
+    )
+  }
+}
+
 // MARK: - Model Settings View
 struct ModelSettingsView: View {
   @ObservedObject var settings: Settings
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 16) {
+    Form {
       GroupBox("Model Selection") {
         Picker("Model", selection: $settings.modelName) {
           ForEach(settings.availableModels, id: \.self) { model in
             Text(model).tag(model)
           }
         }
-        .disabled(settings.availableModels.isEmpty)
+      }
 
-        if settings.availableModels.isEmpty {
-          Text("No models found. Please add YOLO models to the application bundle.")
-            .foregroundColor(.secondary)
+      if !settings.modelDescription.isEmpty {
+        GroupBox("Description") {
+          Text(settings.modelDescription)
+            .font(.system(.body, design: .monospaced))
         }
       }
 
-      GroupBox("Model Information") {
-        VStack(alignment: .leading, spacing: 8) {
-          Text("Model: \(settings.modelName)")
-            .font(.headline)
-
-          Text("Description:")
-            .font(.subheadline)
-          Text(settings.modelDescription)
-            .font(.caption)
-            .foregroundColor(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
+      if !settings.modelMetadata.isEmpty {
+        GroupBox("Model Information") {
+          Text(settings.modelMetadata)
+            .font(.system(.body, design: .monospaced))
         }
+      }
+
+      GroupBox("Detected Classes") {
+        DetectedClassesGrid(classes: settings.modelClasses)
       }
     }
+    .padding()
   }
 }
 
@@ -199,43 +264,6 @@ struct AppearanceSettingsView: View {
               Text(String(format: "%.1f", settings.boundingBoxOpacity))
             }
             Slider(value: $settings.boundingBoxOpacity, in: 0.1...1, step: 0.1)
-          }
-        }
-      }
-    }
-  }
-}
-
-// MARK: - Classes View
-struct ClassesView: View {
-  @ObservedObject var settings: Settings
-
-  var body: some View {
-    VStack(alignment: .leading, spacing: 16) {
-      GroupBox("Detected Classes") {
-        if settings.modelClasses.isEmpty {
-          Text("No classes available")
-            .foregroundColor(.secondary)
-        } else {
-          LazyVGrid(
-            columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3),
-            spacing: 8
-          ) {
-            ForEach(settings.modelClasses, id: \.self) { className in
-              HStack(spacing: 6) {
-                Circle()
-                  .fill(getColor(settings.getColorForClass(className)))
-                  .frame(width: 8, height: 8)
-                Text(className)
-                  .font(.system(size: 11))
-                  .lineLimit(1)
-                Spacer(minLength: 0)
-              }
-              .padding(.horizontal, 6)
-              .padding(.vertical, 4)
-              .background(Color(NSColor.controlBackgroundColor))
-              .cornerRadius(4)
-            }
           }
         }
       }

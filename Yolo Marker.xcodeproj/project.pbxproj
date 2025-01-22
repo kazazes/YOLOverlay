@@ -11,6 +11,7 @@
 		0F3EE7B82D40F90900A1CBC2 /* yolov8x.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7B42D40F90900A1CBC2 /* yolov8x.mlpackage */; };
 		0F3EE7B92D40F90900A1CBC2 /* yolov8l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7B22D40F90900A1CBC2 /* yolov8l.mlpackage */; };
 		0F3EE7BA2D40F90900A1CBC2 /* yolo11l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7AE2D40F90900A1CBC2 /* yolo11l.mlpackage */; };
+		0F3EE7F82D41407400A1CBC2 /* yolo11x.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7F72D41407400A1CBC2 /* yolo11x.mlpackage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,6 +39,7 @@
 		0F3EE7B02D40F90900A1CBC2 /* yolo11s.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11s.mlpackage; sourceTree = "<group>"; };
 		0F3EE7B22D40F90900A1CBC2 /* yolov8l.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8l.mlpackage; sourceTree = "<group>"; };
 		0F3EE7B42D40F90900A1CBC2 /* yolov8x.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8x.mlpackage; sourceTree = "<group>"; };
+		0F3EE7F72D41407400A1CBC2 /* yolo11x.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11x.mlpackage; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -107,6 +109,7 @@
 		0F3EE7B62D40F90900A1CBC2 /* ultralytics */ = {
 			isa = PBXGroup;
 			children = (
+				0F3EE7F72D41407400A1CBC2 /* yolo11x.mlpackage */,
 				0F3EE7AE2D40F90900A1CBC2 /* yolo11l.mlpackage */,
 				0F3EE7B02D40F90900A1CBC2 /* yolo11s.mlpackage */,
 				0F3EE7B22D40F90900A1CBC2 /* yolov8l.mlpackage */,
@@ -262,6 +265,7 @@
 				0F3EE7B72D40F90900A1CBC2 /* yolo11s.mlpackage in Sources */,
 				0F3EE7B82D40F90900A1CBC2 /* yolov8x.mlpackage in Sources */,
 				0F3EE7B92D40F90900A1CBC2 /* yolov8l.mlpackage in Sources */,
+				0F3EE7F82D41407400A1CBC2 /* yolo11x.mlpackage in Sources */,
 				0F3EE7BA2D40F90900A1CBC2 /* yolo11l.mlpackage in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

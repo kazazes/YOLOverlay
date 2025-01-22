@@ -55,12 +55,15 @@ class Settings: ObservableObject {
   // Model information
   @Published var modelName: String {
     didSet {
-      UserDefaults.standard.set(modelName, forKey: "selectedModel")
-      NotificationCenter.default.post(name: .modelChanged, object: nil)
+      if modelName != oldValue {
+        UserDefaults.standard.set(modelName, forKey: "selectedModel")
+        NotificationCenter.default.post(name: .modelChanged, object: nil)
+      }
     }
   }
   @Published var modelDescription: String = ""
   @Published var modelClasses: [String] = []
+  @Published var modelMetadata: String = ""
   @Published var classColors: [String: String] = [:]
   @Published var availableModels: [String] = []
 
@@ -73,6 +76,20 @@ class Settings: ObservableObject {
     "red", "blue", "green", "yellow", "orange", "purple",
     "pink", "teal", "indigo", "mint", "brown", "cyan",
   ]
+
+  private func generateRandomColor() -> String {
+    let hue = Double.random(in: 0...1)
+    let saturation = Double.random(in: 0.7...0.9)
+    let brightness = Double.random(in: 0.9...1.0)
+
+    let color = NSColor(
+      calibratedHue: hue, saturation: saturation, brightness: brightness, alpha: 1.0)
+    let red = UInt8(round(color.redComponent * 255))
+    let green = UInt8(round(color.greenComponent * 255))
+    let blue = UInt8(round(color.blueComponent * 255))
+
+    return String(format: "#%02X%02X%02X", red, green, blue)
+  }
 
   private init() {
     // Initialize stored properties first
@@ -161,24 +178,28 @@ class Settings: ObservableObject {
     }
   }
 
-  func updateModelInfo(name: String, description: String, classes: [String]) {
-    // Only update model name if it's different to avoid notification loop
-    if self.modelName != name {
-      self.modelName = name
-    }
+  func updateModelInfo(name: String, description: String, classes: [String], metadata: String) {
+    // Only update if there are actual changes
+    let hasChanges =
+      modelName != name || modelDescription != description || modelClasses != classes
+      || modelMetadata != metadata
 
-    self.modelDescription = description
-    self.modelClasses = classes
+    if hasChanges {
+      modelName = name
+      modelDescription = description
+      modelClasses = classes
+      modelMetadata = metadata
 
-    // Generate colors for new classes
-    for (index, className) in classes.enumerated() {
-      if classColors[className] == nil {
-        classColors[className] = Settings.availableColors[index % Settings.availableColors.count]
+      // Generate colors for any new classes
+      for className in classes {
+        if classColors[className] == nil {
+          classColors[className] = generateRandomColor()
+        }
       }
-    }
 
-    // Save class colors
-    UserDefaults.standard.set(classColors, forKey: "classColors")
+      // Clean up colors for removed classes
+      classColors = classColors.filter { classes.contains($0.key) }
+    }
   }
 
   func getColorForClass(_ className: String) -> String {
