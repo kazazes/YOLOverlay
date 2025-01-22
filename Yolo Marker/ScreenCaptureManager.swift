@@ -119,6 +119,7 @@ class ScreenCaptureManager: ObservableObject {
       configuration.minimumFrameInterval = CMTime(
         value: 1, timescale: Int32(Settings.shared.targetFPS))
       configuration.queueDepth = 5
+      configuration.showsCursor = false  // Exclude mouse pointer from capture
       print(
         "⚙️ Configured stream: \(configuration.width)x\(configuration.height) @ \(Settings.shared.targetFPS)fps"
       )

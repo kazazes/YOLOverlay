@@ -6,6 +6,7 @@ import SwiftUI
 class AppDelegate: NSObject, NSApplicationDelegate {
   private var statusItem: NSStatusItem!
   private var preferencesWindow: NSWindow?
+  private var logWindowController: LogWindowController?
   private var statsTimer: Timer?
   private let captureManager = ScreenCaptureManager.shared
   private var cancellables = Set<AnyCancellable>()
@@ -88,6 +89,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     menu.addItem(NSMenuItem.separator())
 
+    // Add log window item
+    let logsItem = NSMenuItem(
+      title: "Show Logs",
+      action: #selector(showLogs),
+      keyEquivalent: "l"
+    )
+    logsItem.target = self
+    menu.addItem(logsItem)
+
     // Add preferences item
     let preferencesItem = NSMenuItem(
       title: "Preferences...",
@@ -138,6 +148,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     preferencesWindow?.makeKeyAndOrderFront(nil)
+    NSApp.activate(ignoringOtherApps: true)
+  }
+
+  @objc func showLogs() {
+    if logWindowController == nil {
+      logWindowController = LogWindowController()
+    }
+    logWindowController?.showWindow(nil)
     NSApp.activate(ignoringOtherApps: true)
   }
 

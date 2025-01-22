@@ -13,6 +13,7 @@ struct PreferencesView: View {
         Text("Performance").tag("Performance")
         Text("Appearance").tag("Appearance")
         Text("Classes").tag("Classes")
+        Text("Citation").tag("Citation")
       }
       .listStyle(.sidebar)
     } detail: {
@@ -28,6 +29,8 @@ struct PreferencesView: View {
             AppearanceSettingsView(settings: settings)
           case "Classes":
             ClassesView(settings: settings)
+          case "Citation":
+            CitationView()
           default:
             EmptyView()
           }
@@ -234,6 +237,60 @@ struct ClassesView: View {
               .cornerRadius(4)
             }
           }
+        }
+      }
+    }
+  }
+}
+
+// MARK: - Citation View
+struct CitationView: View {
+  var body: some View {
+    VStack(alignment: .leading, spacing: 16) {
+      GroupBox("About") {
+        VStack(alignment: .leading, spacing: 12) {
+          Text("This application uses YOLO11 by Ultralytics")
+            .font(.headline)
+
+          Text(
+            "YOLO11 is a state-of-the-art object detection model that powers the core functionality of this application."
+          )
+          .font(.subheadline)
+          .foregroundColor(.secondary)
+        }
+      }
+
+      GroupBox("Authors & Version") {
+        VStack(alignment: .leading, spacing: 12) {
+          VStack(alignment: .leading, spacing: 4) {
+            Text("Authors")
+              .font(.subheadline)
+              .foregroundColor(.secondary)
+            Text("Glenn Jocher & Jing Qiu")
+              .font(.body)
+          }
+
+          VStack(alignment: .leading, spacing: 4) {
+            Text("Version")
+              .font(.subheadline)
+              .foregroundColor(.secondary)
+            Text("11.0.0 (2024)")
+              .font(.body)
+          }
+        }
+      }
+
+      GroupBox("Links & License") {
+        VStack(alignment: .leading, spacing: 12) {
+          Link(
+            "View on GitHub",
+            destination: URL(string: "https://github.com/ultralytics/ultralytics")!
+          )
+          .font(.body)
+
+          Text("Licensed under AGPL-3.0")
+            .font(.subheadline)
+            .foregroundColor(.secondary)
         }
       }
     }

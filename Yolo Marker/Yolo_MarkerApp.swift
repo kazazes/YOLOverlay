@@ -17,5 +17,13 @@ struct Yolo_MarkerApp: App {
     }
     .windowStyle(.hiddenTitleBar)
     .defaultSize(width: 0, height: 0)
+    .commands {
+      CommandGroup(after: .windowSize) {
+        Button("Show Logs") {
+          appDelegate.showLogs()
+        }
+        .keyboardShortcut("l", modifiers: [.command])
+      }
+    }
   }
 }
