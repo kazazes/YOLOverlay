@@ -12,8 +12,10 @@ struct Yolo_MarkerApp: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
   var body: some Scene {
-    Settings {
+    WindowGroup {
       EmptyView()
     }
+    .windowStyle(.hiddenTitleBar)
+    .defaultSize(width: 0, height: 0)
   }
 }

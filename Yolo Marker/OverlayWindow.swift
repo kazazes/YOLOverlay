@@ -29,6 +29,19 @@ class OverlayWindow: NSWindow {
 struct OverlayView: View {
   let detectedObjects: [DetectedObject]
   let screenFrame: CGRect
+  @ObservedObject private var settings = Settings.shared
+
+  private func getColor(_ name: String) -> Color {
+    switch name.lowercased() {
+    case "red": return .red
+    case "blue": return .blue
+    case "green": return .green
+    case "yellow": return .yellow
+    case "orange": return .orange
+    case "purple": return .purple
+    default: return .red
+    }
+  }
 
   var body: some View {
     ZStack {
@@ -36,22 +49,29 @@ struct OverlayView: View {
       Color.clear
 
       // Draw bounding boxes
-      ForEach(detectedObjects) { object in
+      ForEach(detectedObjects.filter { $0.confidence >= settings.confidenceThreshold }) { object in
         let rect = calculateScreenRect(object.boundingBox)
+        let color = getColor(settings.boundingBoxColor)
 
-        Rectangle()
-          .strokeBorder(Color.red, lineWidth: 2)
-          .frame(width: rect.width, height: rect.height)
-          .position(x: rect.midX, y: rect.midY)
-          .overlay(
+        ZStack {
+          // Bounding box
+          Rectangle()
+            .stroke(color, lineWidth: 2)
+            .frame(width: rect.width, height: rect.height)
+            .position(x: rect.midX, y: rect.midY)
+
+          // Label (if enabled)
+          if settings.showLabels {
             Text("\(object.label) (\(Int(object.confidence * 100))%)")
               .font(.system(size: 12, weight: .bold))
               .foregroundColor(.white)
               .padding(4)
-              .background(Color.red)
+              .background(color)
               .cornerRadius(4)
               .position(x: rect.midX, y: rect.minY - 10)
-          )
+          }
+        }
+        .opacity(settings.boundingBoxOpacity)
       }
     }
     .frame(width: screenFrame.width, height: screenFrame.height)

@@ -19,6 +19,23 @@ class ScreenCaptureManager: ObservableObject {
   private var streamOutput: StreamOutput?
   private let yoloManager = YOLOModelManager()
   private var overlayController: OverlayWindowController?
+  private let statsManager = StatsManager()
+
+  // Frame processing queue
+  private let processingQueue = DispatchQueue(
+    label: "com.yolomarker.processing",
+    qos: .userInteractive,
+    attributes: [],
+    autoreleaseFrequency: .workItem
+  )
+
+  // Semaphore to limit concurrent processing
+  private let processingSemaphore = DispatchSemaphore(value: 1)
+  private var isProcessing = false
+
+  var stats: String {
+    return statsManager.getStatsString()
+  }
 
   init() {
     setupOverlayWindow()
@@ -35,9 +52,26 @@ class ScreenCaptureManager: ObservableObject {
     streamOutput = StreamOutput()
     streamOutput?.frameHandler = { [weak self] image in
       guard let self = self else { return }
-      Task { @MainActor in
+
+      // Only skip frame if we're severely backed up
+      if self.isProcessing {
+        self.statsManager.recordFrame()  // Count as dropped frame
+        return
+      }
+
+      self.processingQueue.async {
+        self.isProcessing = true
+        self.statsManager.recordFrame()
+        let startTime = CACurrentMediaTime()
+
         if let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) {
           self.yoloManager.detect(in: cgImage)
+        }
+
+        let processingTime = CACurrentMediaTime() - startTime
+        Task { @MainActor in
+          self.statsManager.recordProcessingTime(processingTime)
+          self.isProcessing = false
         }
       }
     }
@@ -53,6 +87,7 @@ class ScreenCaptureManager: ObservableObject {
       Task { @MainActor in
         self?.detectedObjects = objects
         self?.overlayController?.updateDetections(objects)
+        self?.statsManager.updateDetections(objects)
       }
     }
   }
@@ -77,6 +112,7 @@ class ScreenCaptureManager: ObservableObject {
       try await stream?.startCapture()
 
       isRecording = true
+      statsManager.reset()
     } catch {
       print("Failed to start capture: \(error)")
     }
@@ -88,6 +124,7 @@ class ScreenCaptureManager: ObservableObject {
       isRecording = false
       detectedObjects = []
       overlayController?.updateDetections([])
+      statsManager.reset()
     } catch {
       print("Failed to stop capture: \(error)")
     }
