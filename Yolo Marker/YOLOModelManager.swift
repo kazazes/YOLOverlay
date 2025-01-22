@@ -49,25 +49,6 @@ class YOLOModelManager {
 
       guard let modelURL = modelURL else {
         print("Error: Could not find model in any format")
-        print("Bundle path: \(Bundle.main.bundlePath)")
-        print("Resource path: \(String(describing: Bundle.main.resourcePath))")
-        if let resourceURL = Bundle.main.resourceURL {
-          do {
-            let contents = try FileManager.default.contentsOfDirectory(
-              at: resourceURL, includingPropertiesForKeys: nil)
-            print("Bundle contents: \(contents)")
-
-            // Also check Resources directory contents
-            let resourcesURL = resourceURL.appendingPathComponent("Contents/Resources")
-            if FileManager.default.fileExists(atPath: resourcesURL.path) {
-              let resourceContents = try FileManager.default.contentsOfDirectory(
-                at: resourcesURL, includingPropertiesForKeys: nil)
-              print("Resources contents: \(resourceContents)")
-            }
-          } catch {
-            print("Failed to list contents: \(error)")
-          }
-        }
         return
       }
 
@@ -79,7 +60,26 @@ class YOLOModelManager {
       do {
         let model = try MLModel(contentsOf: modelURL, configuration: config)
         print("Successfully loaded MLModel")
-        print("Model description: \(model.modelDescription)")
+
+        // Extract model information
+        let modelDesc = model.modelDescription
+
+        // Get class labels directly from the model
+        let classLabels = modelDesc.classLabels as? [String] ?? []
+
+        // Get additional metadata
+        let metadata = modelDesc.metadata
+        let description =
+          metadata[MLModelMetadataKey.description] as? String ?? "YOLOv8 Object Detection Model"
+        let version = metadata[MLModelMetadataKey.versionString] as? String ?? ""
+        let modelInfo = "\(description) (v\(version))"
+
+        // Update settings with model information
+        Settings.shared.updateModelInfo(
+          name: modelName,
+          description: modelInfo,
+          classes: classLabels
+        )
 
         do {
           visionModel = try VNCoreMLModel(for: model)
@@ -99,7 +99,6 @@ class YOLOModelManager {
         }
       } catch {
         print("Failed to load MLModel: \(error)")
-        print("Detailed error: \(error.localizedDescription)")
       }
     } catch {
       print("Unexpected error: \(error)")

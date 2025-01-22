@@ -51,7 +51,7 @@ struct OverlayView: View {
       // Draw bounding boxes
       ForEach(detectedObjects.filter { $0.confidence >= settings.confidenceThreshold }) { object in
         let rect = calculateScreenRect(object.boundingBox)
-        let color = getColor(settings.boundingBoxColor)
+        let color = getColor(settings.getColorForClass(object.label))
 
         ZStack {
           // Bounding box

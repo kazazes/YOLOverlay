@@ -1,6 +1,12 @@
 import Foundation
+import SwiftUI
 
 class Settings: ObservableObject {
+  static let availableColors = [
+    "red", "orange", "yellow", "green", "mint", "teal", "cyan", "blue",
+    "indigo", "purple", "pink", "brown", "gray",
+  ]
+
   @Published var targetFPS: Double {
     didSet {
       UserDefaults.standard.set(targetFPS, forKey: "targetFPS")
@@ -32,6 +38,12 @@ class Settings: ObservableObject {
     }
   }
 
+  // Model information
+  @Published var modelName: String = ""
+  @Published var modelDescription: String = ""
+  @Published var modelClasses: [String] = []
+  @Published var classColors: [String: String] = [:]
+
   private(set) var minimumFrameInterval: TimeInterval
 
   static let shared = Settings()
@@ -49,6 +61,33 @@ class Settings: ObservableObject {
     self.boundingBoxColor = UserDefaults.standard.string(forKey: "boundingBoxColor") ?? "red"
     self.boundingBoxOpacity = UserDefaults.standard.double(forKey: "boundingBoxOpacity")
       .nonZeroValue(defaultValue: 1.0)
+
+    // Load saved class colors or generate new ones
+    if let savedColors = UserDefaults.standard.dictionary(forKey: "classColors")
+      as? [String: String]
+    {
+      self.classColors = savedColors
+    }
+  }
+
+  func updateModelInfo(name: String, description: String, classes: [String]) {
+    self.modelName = name
+    self.modelDescription = description
+    self.modelClasses = classes
+
+    // Generate colors for new classes
+    for (index, className) in classes.enumerated() {
+      if classColors[className] == nil {
+        classColors[className] = Settings.availableColors[index % Settings.availableColors.count]
+      }
+    }
+
+    // Save class colors
+    UserDefaults.standard.set(classColors, forKey: "classColors")
+  }
+
+  func getColorForClass(_ className: String) -> String {
+    return classColors[className] ?? boundingBoxColor
   }
 }
 
