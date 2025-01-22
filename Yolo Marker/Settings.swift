@@ -33,8 +33,27 @@ class Settings: ObservableObject {
     }
   }
 
+  // Smoothing settings
+  @Published var enableSmoothing: Bool {
+    didSet {
+      UserDefaults.standard.set(enableSmoothing, forKey: "enableSmoothing")
+    }
+  }
+
+  @Published var smoothingFactor: Double {
+    didSet {
+      UserDefaults.standard.set(smoothingFactor, forKey: "smoothingFactor")
+    }
+  }
+
+  @Published var objectPersistence: Double {
+    didSet {
+      UserDefaults.standard.set(objectPersistence, forKey: "objectPersistence")
+    }
+  }
+
   // Model information
-  @Published var modelName: String = "" {
+  @Published var modelName: String {
     didSet {
       UserDefaults.standard.set(modelName, forKey: "selectedModel")
       NotificationCenter.default.post(name: .modelChanged, object: nil)
@@ -43,7 +62,7 @@ class Settings: ObservableObject {
   @Published var modelDescription: String = ""
   @Published var modelClasses: [String] = []
   @Published var classColors: [String: String] = [:]
-  @Published var availableModels: [YOLOModel] = []
+  @Published var availableModels: [String] = []
 
   private(set) var minimumFrameInterval: TimeInterval
 
@@ -69,64 +88,87 @@ class Settings: ObservableObject {
     self.boundingBoxOpacity = UserDefaults.standard.double(forKey: "boundingBoxOpacity")
       .nonZeroValue(defaultValue: 1.0)
 
-    // Load saved class colors or generate new ones
+    // Initialize smoothing settings
+    self.enableSmoothing = UserDefaults.standard.bool(forKey: "enableSmoothing", defaultValue: true)
+    self.smoothingFactor = UserDefaults.standard.double(forKey: "smoothingFactor")
+      .nonZeroValue(defaultValue: 0.3)
+    self.objectPersistence = UserDefaults.standard.double(forKey: "objectPersistence")
+      .nonZeroValue(defaultValue: 0.5)
+
+    // Initialize model name with a default value
+    self.modelName = UserDefaults.standard.string(forKey: "selectedModel") ?? "yolov8n"
+    self.modelDescription = ""
+
+    // Load saved class colors or use empty dictionary
     if let savedColors = UserDefaults.standard.dictionary(forKey: "classColors")
       as? [String: String]
     {
       self.classColors = savedColors
-    }
-
-    // Load available models
-    self.loadAvailableModels()
-
-    // Set selected model
-    if let savedModel = UserDefaults.standard.string(forKey: "selectedModel") {
-      self.modelName = savedModel
     } else {
-      self.modelName = "yolov8n"  // Default model
+      self.classColors = [:]
     }
+
+    // Initialize empty arrays
+    self.modelClasses = []
+    self.availableModels = []
+
+    // Now that all properties are initialized, load available models
+    self.loadAvailableModels()
   }
 
   func loadAvailableModels() {
-    let versions = [
-      ("v8", "YOLOv8"),
-      ("11", "YOLO11"),
-    ]
-    let sizes = [
-      ("n", "Nano", "Fastest, smallest model"),
-      ("s", "Small", "Balanced speed and accuracy"),
-      ("m", "Medium", "Better accuracy, medium speed"),
-      ("l", "Large", "High accuracy, slower speed"),
-      ("x", "XLarge", "Highest accuracy, slowest speed"),
-    ]
+    var models: [String] = []
 
-    var models: [YOLOModel] = []
-
-    // Generate all possible model combinations
-    for (version, versionName) in versions {
-      for (size, sizeName, description) in sizes {
-        let name = version == "11" ? "yolo11\(size)" : "yolov8\(size)"
-        let displayName = "\(versionName) \(sizeName)"
-        models.append(
-          YOLOModel(
-            name: name,
-            displayName: displayName,
-            description: description
-          ))
+    // Check main bundle for .mlpackage and .mlmodelc files
+    if let resourcePath = Bundle.main.resourcePath {
+      let fileManager = FileManager.default
+      do {
+        let files = try fileManager.contentsOfDirectory(atPath: resourcePath)
+        models = files.filter { $0.hasSuffix(".mlpackage") || $0.hasSuffix(".mlmodelc") }
+          .map {
+            $0.replacingOccurrences(of: ".mlpackage", with: "")
+              .replacingOccurrences(of: ".mlmodelc", with: "")
+          }
+        print("Found models in main bundle: \(models)")
+      } catch {
+        print("Error scanning main bundle: \(error)")
       }
     }
 
-    // Filter to only include models that exist in the bundle
-    availableModels = models.filter { model in
-      let formats = ["mlpackage", "mlmodelc"]
-      return formats.contains { format in
-        Bundle.main.url(forResource: model.name, withExtension: format) != nil
+    // Check Resources directory (without appending Contents/Resources again)
+    if let resourcesURL = Bundle.main.resourceURL {
+      do {
+        let files = try FileManager.default.contentsOfDirectory(atPath: resourcesURL.path)
+        let additionalModels = files.filter {
+          $0.hasSuffix(".mlpackage") || $0.hasSuffix(".mlmodelc")
+        }
+        .map {
+          $0.replacingOccurrences(of: ".mlpackage", with: "")
+            .replacingOccurrences(of: ".mlmodelc", with: "")
+        }
+        print("Found models in Resources: \(additionalModels)")
+        models.append(contentsOf: additionalModels)
+      } catch {
+        print("Error scanning Resources directory: \(error)")
       }
+    }
+
+    // Remove duplicates and sort
+    availableModels = Array(Set(models)).sorted()
+    print("Final available models: \(availableModels)")
+
+    // If current model is not in available models, select first available
+    if !availableModels.isEmpty && !availableModels.contains(modelName) {
+      modelName = availableModels[0]
     }
   }
 
   func updateModelInfo(name: String, description: String, classes: [String]) {
-    self.modelName = name
+    // Only update model name if it's different to avoid notification loop
+    if self.modelName != name {
+      self.modelName = name
+    }
+
     self.modelDescription = description
     self.modelClasses = classes
 

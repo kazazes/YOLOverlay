@@ -7,8 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0F3EE79B2D40E77900A1CBC2 /* yolov8n.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7952D40E4F500A1CBC2 /* yolov8n.mlpackage */; };
-		0F3EE7A72D40F6E400A1CBC2 /* yolo11s.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7A62D40F6E400A1CBC2 /* yolo11s.mlpackage */; };
+		0F3EE7B72D40F90900A1CBC2 /* yolo11s.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7B02D40F90900A1CBC2 /* yolo11s.mlpackage */; };
+		0F3EE7B82D40F90900A1CBC2 /* yolov8x.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7B42D40F90900A1CBC2 /* yolov8x.mlpackage */; };
+		0F3EE7B92D40F90900A1CBC2 /* yolov8l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7B22D40F90900A1CBC2 /* yolov8l.mlpackage */; };
+		0F3EE7BA2D40F90900A1CBC2 /* yolo11l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7AE2D40F90900A1CBC2 /* yolo11l.mlpackage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,8 +34,10 @@
 		0F3EE7632D40E13F00A1CBC2 /* Yolo Marker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Yolo Marker.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0F3EE7742D40E14000A1CBC2 /* Yolo MarkerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Yolo MarkerTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0F3EE77E2D40E14000A1CBC2 /* Yolo MarkerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Yolo MarkerUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		0F3EE7952D40E4F500A1CBC2 /* yolov8n.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8n.mlpackage; sourceTree = "<group>"; };
-		0F3EE7A62D40F6E400A1CBC2 /* yolo11s.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11s.mlpackage; sourceTree = "<group>"; };
+		0F3EE7AE2D40F90900A1CBC2 /* yolo11l.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11l.mlpackage; sourceTree = "<group>"; };
+		0F3EE7B02D40F90900A1CBC2 /* yolo11s.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11s.mlpackage; sourceTree = "<group>"; };
+		0F3EE7B22D40F90900A1CBC2 /* yolov8l.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8l.mlpackage; sourceTree = "<group>"; };
+		0F3EE7B42D40F90900A1CBC2 /* yolov8x.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8x.mlpackage; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -82,12 +86,11 @@
 		0F3EE75A2D40E13F00A1CBC2 = {
 			isa = PBXGroup;
 			children = (
-				0F3EE7A62D40F6E400A1CBC2 /* yolo11s.mlpackage */,
+				0F3EE7B62D40F90900A1CBC2 /* ultralytics */,
 				0F3EE7652D40E13F00A1CBC2 /* Yolo Marker */,
 				0F3EE7772D40E14000A1CBC2 /* Yolo MarkerTests */,
 				0F3EE7812D40E14000A1CBC2 /* Yolo MarkerUITests */,
 				0F3EE7642D40E13F00A1CBC2 /* Products */,
-				0F3EE7952D40E4F500A1CBC2 /* yolov8n.mlpackage */,
 			);
 			sourceTree = "<group>";
 		};
@@ -99,6 +102,17 @@
 				0F3EE77E2D40E14000A1CBC2 /* Yolo MarkerUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		0F3EE7B62D40F90900A1CBC2 /* ultralytics */ = {
+			isa = PBXGroup;
+			children = (
+				0F3EE7AE2D40F90900A1CBC2 /* yolo11l.mlpackage */,
+				0F3EE7B02D40F90900A1CBC2 /* yolo11s.mlpackage */,
+				0F3EE7B22D40F90900A1CBC2 /* yolov8l.mlpackage */,
+				0F3EE7B42D40F90900A1CBC2 /* yolov8x.mlpackage */,
+			);
+			path = ultralytics;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -245,8 +259,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0F3EE79B2D40E77900A1CBC2 /* yolov8n.mlpackage in Sources */,
-				0F3EE7A72D40F6E400A1CBC2 /* yolo11s.mlpackage in Sources */,
+				0F3EE7B72D40F90900A1CBC2 /* yolo11s.mlpackage in Sources */,
+				0F3EE7B82D40F90900A1CBC2 /* yolov8x.mlpackage in Sources */,
+				0F3EE7B92D40F90900A1CBC2 /* yolov8l.mlpackage in Sources */,
+				0F3EE7BA2D40F90900A1CBC2 /* yolo11l.mlpackage in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

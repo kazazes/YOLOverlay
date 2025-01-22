@@ -30,6 +30,7 @@ struct OverlayView: View {
   let detectedObjects: [DetectedObject]
   let screenFrame: CGRect
   @ObservedObject private var settings = Settings.shared
+  @StateObject private var tracker = ObjectTracker()
 
   private func getColor(_ name: String) -> Color {
     switch name.lowercased() {
@@ -39,6 +40,12 @@ struct OverlayView: View {
     case "yellow": return .yellow
     case "orange": return .orange
     case "purple": return .purple
+    case "pink": return .pink
+    case "teal": return .teal
+    case "indigo": return .indigo
+    case "mint": return .mint
+    case "brown": return .brown
+    case "cyan": return .cyan
     default: return .red
     }
   }
@@ -49,9 +56,10 @@ struct OverlayView: View {
       Color.clear
 
       // Draw bounding boxes
-      ForEach(detectedObjects.filter { $0.confidence >= settings.confidenceThreshold }) { object in
-        let rect = calculateScreenRect(object.boundingBox)
+      ForEach(tracker.trackedObjects) { object in
+        let rect = calculateScreenRect(object.rect)
         let color = getColor(settings.getColorForClass(object.label))
+          .opacity(object.alpha * settings.boundingBoxOpacity)
 
         ZStack {
           // Bounding box
@@ -71,8 +79,13 @@ struct OverlayView: View {
               .position(x: rect.midX, y: rect.minY - 10)
           }
         }
-        .opacity(settings.boundingBoxOpacity)
       }
+    }
+    .onAppear {
+      tracker.update(with: detectedObjects)
+    }
+    .onChange(of: detectedObjects.count) { _ in
+      tracker.update(with: detectedObjects)
     }
     .frame(width: screenFrame.width, height: screenFrame.height)
   }

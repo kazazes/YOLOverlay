@@ -19,6 +19,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Initialize capture manager
     captureManager = ScreenCaptureManager()
+
+    // Create menu items
+    if let mainMenu = NSApp.mainMenu {
+      let appMenuItem = mainMenu.items.first
+
+      // Add Preferences menu item
+      let prefSeparator = NSMenuItem.separator()
+      appMenuItem?.submenu?.insertItem(prefSeparator, at: 1)
+
+      let preferencesItem = NSMenuItem(
+        title: "Preferences...",
+        action: #selector(showPreferences),
+        keyEquivalent: ","
+      )
+      appMenuItem?.submenu?.insertItem(preferencesItem, at: 2)
+
+      let postPrefSeparator = NSMenuItem.separator()
+      appMenuItem?.submenu?.insertItem(postPrefSeparator, at: 3)
+    }
+
+    // Show preferences window at launch
+    showPreferences()
   }
 
   private func setupMenu() {
@@ -82,22 +104,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
   }
 
-  @objc private func showPreferences() {
+  @objc func showPreferences() {
     if preferencesWindow == nil {
-      let preferencesView = PreferencesView()
-      let hostingController = NSHostingController(rootView: preferencesView)
-
-      preferencesWindow = NSWindow(
-        contentRect: NSRect(x: 0, y: 0, width: 350, height: 250),
+      let window = NSWindow(
+        contentRect: NSRect(x: 0, y: 0, width: 700, height: 500),
         styleMask: [.titled, .closable],
         backing: .buffered,
         defer: false
       )
+      window.title = "Preferences"
+      window.center()
 
-      preferencesWindow?.title = "Preferences"
-      preferencesWindow?.contentViewController = hostingController
-      preferencesWindow?.center()
-      preferencesWindow?.isReleasedWhenClosed = false
+      let hostingView = NSHostingView(rootView: PreferencesView())
+      window.contentView = hostingView
+
+      preferencesWindow = window
     }
 
     preferencesWindow?.makeKeyAndOrderFront(nil)

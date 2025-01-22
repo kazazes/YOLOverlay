@@ -10,14 +10,26 @@ class YOLOModelManager {
 
   init() {
     setupModel()
+
+    // Listen for model changes
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(modelChanged),
+      name: .modelChanged,
+      object: nil
+    )
+  }
+
+  @objc private func modelChanged() {
+    setupModel()
   }
 
   private func setupModel() {
     do {
       var modelURL: URL?
 
-      // Try different model formats and locations
-      let modelName = "yolov8n"
+      // Get model name from settings
+      let modelName = Settings.shared.modelName.isEmpty ? "yolov8n" : Settings.shared.modelName
       let formats = ["mlpackage", "mlmodelc"]
 
       // First try the main bundle
@@ -111,8 +123,17 @@ class YOLOModelManager {
       return
     }
 
+    // Create a handler with proper orientation
+    // Vision framework will automatically:
+    // 1. Scale the image to the model's required size (640x640)
+    // 2. Preserve aspect ratio
+    // 3. Pad with gray to make it square
+    let handler = VNImageRequestHandler(
+      cgImage: image,
+      orientation: .up
+    )
+
     do {
-      let handler = VNImageRequestHandler(cgImage: image, options: [:])
       try handler.perform([request])
     } catch {
       print("Failed to perform detection: \(error)")
@@ -129,9 +150,14 @@ class YOLOModelManager {
   }
 }
 
-struct DetectedObject: Identifiable {
+struct DetectedObject: Identifiable, Equatable {
   let id = UUID()
   let label: String
   let confidence: Float
   let boundingBox: CGRect
+
+  // Implement Equatable
+  static func == (lhs: DetectedObject, rhs: DetectedObject) -> Bool {
+    lhs.label == rhs.label && lhs.confidence == rhs.confidence && lhs.boundingBox == rhs.boundingBox
+  }
 }
