@@ -1,11 +1,14 @@
 import AppKit
+import Combine
 import SwiftUI
 
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
   private var statusItem: NSStatusItem!
-  private var captureManager: ScreenCaptureManager!
-  private var statsTimer: Timer?
   private var preferencesWindow: NSWindow?
+  private var statsTimer: Timer?
+  private let captureManager = ScreenCaptureManager.shared
+  private var cancellables = Set<AnyCancellable>()
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     // Create status item
@@ -16,9 +19,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     setupMenu()
-
-    // Initialize capture manager
-    captureManager = ScreenCaptureManager()
+    setupObservers()
 
     // Create menu items
     if let mainMenu = NSApp.mainMenu {
@@ -41,6 +42,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Show preferences window at launch
     showPreferences()
+  }
+
+  private func setupObservers() {
+    captureManager.$isRecording
+      .receive(on: RunLoop.main)
+      .sink { [weak self] isRecording in
+        self?.updateMenuState(isRecording: isRecording)
+      }
+      .store(in: &cancellables)
+  }
+
+  private func updateMenuState(isRecording: Bool) {
+    statusItem.button?.image = NSImage(
+      systemSymbolName: isRecording ? "eye.fill" : "eye",
+      accessibilityDescription: isRecording ? "YOLO Detection Active" : "YOLO Detection"
+    )
+
+    if let menuItem = statusItem.menu?.item(at: 0) {
+      menuItem.title = isRecording ? "Stop Detection" : "Start Detection"
+    }
+
+    if isRecording {
+      startStatsTimer()
+    } else {
+      stopStatsTimer()
+    }
   }
 
   private func setupMenu() {
@@ -83,23 +110,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   @objc private func toggleDetection() {
-    Task { @MainActor in
-      if captureManager.isRecording {
+    Task {
+      let isRecording = await captureManager.isRecording
+      if isRecording {
         await captureManager.stopCapture()
-        statusItem.button?.image = NSImage(
-          systemSymbolName: "eye", accessibilityDescription: "YOLO Detection")
-        if let menuItem = statusItem.menu?.item(at: 0) {
-          menuItem.title = "Start Detection"
-        }
-        stopStatsTimer()
       } else {
         await captureManager.startCapture()
-        statusItem.button?.image = NSImage(
-          systemSymbolName: "eye.fill", accessibilityDescription: "YOLO Detection Active")
-        if let menuItem = statusItem.menu?.item(at: 0) {
-          menuItem.title = "Stop Detection"
-        }
-        startStatsTimer()
       }
     }
   }
@@ -128,8 +144,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   private func startStatsTimer() {
     statsTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
       guard let self = self else { return }
-      if let statsItem = self.statusItem.menu?.item(at: 1) {
-        statsItem.title = self.captureManager.stats
+      Task { @MainActor in
+        if let statsItem = self.statusItem.menu?.item(at: 1) {
+          statsItem.title = self.captureManager.stats
+        }
       }
     }
   }

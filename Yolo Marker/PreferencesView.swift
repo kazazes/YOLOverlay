@@ -3,9 +3,10 @@ import SwiftUI
 struct PreferencesView: View {
   @ObservedObject private var settings = Settings.shared
   @State private var selectedTab = "Model"
+  @ObservedObject private var captureManager = ScreenCaptureManager.shared
 
   var body: some View {
-    NavigationSplitView {
+    NavigationSplitView(columnVisibility: .constant(.all)) {
       // Sidebar
       List(selection: $selectedTab) {
         Text("Model").tag("Model")
@@ -33,6 +34,25 @@ struct PreferencesView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+      }
+      .toolbar {
+        Button(action: toggleCapture) {
+          Label(
+            captureManager.isRecording ? "Stop Detection" : "Start Detection",
+            systemImage: captureManager.isRecording ? "stop.circle" : "play.circle"
+          )
+        }
+        .help(captureManager.isRecording ? "Stop object detection" : "Start object detection")
+      }
+    }
+  }
+
+  private func toggleCapture() {
+    Task {
+      if captureManager.isRecording {
+        await captureManager.stopCapture()
+      } else {
+        await captureManager.startCapture()
       }
     }
   }

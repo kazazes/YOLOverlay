@@ -47,6 +47,12 @@ def main():
     # Export to Core ML format
     model.export(format="coreml", nms=True)
 
+    # Remove the .pt file after conversion
+    pt_file_path = f"ultralytics/{model_name}.pt"
+    if os.path.exists(pt_file_path):
+        os.remove(pt_file_path)
+        print(f"Removed {pt_file_path}")
+
     print(f"Done! Model saved as {model_name}.mlpackage")
 
 
