@@ -9,6 +9,9 @@ class LogManager: ObservableObject {
   private let maxEntries = 1000
   private var lastCollectionTime = Date()
   private let subsystem = "com.kazazes.Yolo-Marker"
+  private var seenMessageHashes = Set<Int>()  // Track seen messages
+  private var logdRetryCount = 0
+  private let maxLogdRetries = 3
 
   private init() {
     self.logger = Logger(subsystem: subsystem, category: "app")
@@ -16,57 +19,109 @@ class LogManager: ObservableObject {
     Task {
       while true {
         await collectLogs()
-        try? await Task.sleep(nanoseconds: 100_000_000)  // 100ms
+        // Increase sleep time if we're having logd connection issues
+        let sleepTime = logdRetryCount > 0 ? 2_000_000_000 : 500_000_000  // 2s or 500ms
+        try? await Task.sleep(nanoseconds: UInt64(sleepTime))
       }
     }
   }
 
-  func log(_ message: String, type: OSLogType = .default) {
-    switch type {
-    case .debug:
-      logger.debug("\(message)")
-    case .info:
-      logger.info("\(message)")
-    case .error:
-      logger.error("\(message)")
-    case .fault:
-      logger.fault("\(message)")
-    default:
-      logger.notice("\(message)")
+  // MARK: - Logging Methods
+
+  func debug(_ message: String, file: String = #file, function: String = #function) {
+    let component = URL(fileURLWithPath: file).lastPathComponent
+    logger.debug("[\(component)] \(message)")
+  }
+
+  func info(_ message: String, file: String = #file, function: String = #function) {
+    let component = URL(fileURLWithPath: file).lastPathComponent
+    logger.info("[\(component)] \(message)")
+  }
+
+  func notice(_ message: String, file: String = #file, function: String = #function) {
+    let component = URL(fileURLWithPath: file).lastPathComponent
+    logger.notice("[\(component)] \(message)")
+  }
+
+  func error(
+    _ message: String, error: Error? = nil, file: String = #file, function: String = #function
+  ) {
+    let component = URL(fileURLWithPath: file).lastPathComponent
+    if let error = error {
+      logger.error("[\(component)] \(message): \(error.localizedDescription)")
+    } else {
+      logger.error("[\(component)] \(message)")
+    }
+  }
+
+  func fault(
+    _ message: String, error: Error? = nil, file: String = #file, function: String = #function
+  ) {
+    let component = URL(fileURLWithPath: file).lastPathComponent
+    if let error = error {
+      logger.fault("[\(component)] \(message): \(error.localizedDescription)")
+    } else {
+      logger.fault("[\(component)] \(message)")
     }
   }
 
   private func collectLogs() async {
     do {
-      let store = try OSLogStore(scope: .currentProcessIdentifier)
+      let store = try OSLogStore(scope: .currentProcessIdentifier)  // Back to process scope
       let position = store.position(date: lastCollectionTime)
 
-      var newEntries: [LogEntry] = []
-      for entry in try store.getEntries(at: position) {
-        if let logEntry = entry as? OSLogEntryLog,
-          logEntry.subsystem == subsystem
-        {
-          newEntries.append(
-            LogEntry(
-              message: logEntry.composedMessage,
-              timestamp: entry.date,
-              type: logEntry.level
-            )
+      // Get entries since last collection
+      let entries = try store.getEntries(at: position)
+        .compactMap { $0 as? OSLogEntryLog }
+        .filter { entry in
+          // Include our app logs and any errors/warnings
+          entry.subsystem == subsystem || entry.level == .error || entry.level == .fault
+        }
+        .map { entry in
+          LogEntry(
+            message: entry.composedMessage,
+            timestamp: entry.date,
+            type: entry.level
           )
         }
-      }
-
-      await MainActor.run {
-        // Add new entries and maintain max size
-        logEntries.append(contentsOf: newEntries)
-        if logEntries.count > maxEntries {
-          logEntries.removeFirst(logEntries.count - maxEntries)
+        .filter { entry in
+          // Create a unique hash for each message + timestamp combination
+          let hash = "\(entry.message)|\(entry.timestamp.timeIntervalSince1970)".hashValue
+          if seenMessageHashes.contains(hash) {
+            return false
+          }
+          seenMessageHashes.insert(hash)
+          return true
         }
+
+      // Only add new entries
+      if !entries.isEmpty {
+        await MainActor.run {
+          // Add new entries at the beginning to show newest first
+          logEntries.insert(contentsOf: entries, at: 0)
+
+          // Trim if we exceed maxEntries
+          if logEntries.count > maxEntries {
+            logEntries.removeLast(logEntries.count - maxEntries)
+            // Also trim the seen messages set to prevent unbounded growth
+            seenMessageHashes = Set(
+              logEntries.map { "\($0.message)|\($0.timestamp.timeIntervalSince1970)".hashValue }
+            )
+          }
+        }
+
+        // Update last collection time only if we found entries
+        lastCollectionTime = entries.last?.timestamp ?? lastCollectionTime
       }
 
-      lastCollectionTime = Date()
+      // Reset retry count on success
+      logdRetryCount = 0
     } catch {
-      print("Failed to collect logs: \(error)")
+      logdRetryCount += 1
+      if logdRetryCount <= maxLogdRetries {
+        logger.error(
+          "Failed to collect logs (attempt \(self.logdRetryCount)): \(error.localizedDescription)")
+      }
     }
   }
 }

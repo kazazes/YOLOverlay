@@ -119,43 +119,41 @@ class Settings: ObservableObject {
   func loadAvailableModels() {
     var models: [String] = []
 
-    // Check main bundle for .mlpackage and .mlmodelc files
-    if let resourcePath = Bundle.main.resourcePath {
-      let fileManager = FileManager.default
-      do {
-        let files = try fileManager.contentsOfDirectory(atPath: resourcePath)
-        models = files.filter { $0.hasSuffix(".mlpackage") || $0.hasSuffix(".mlmodelc") }
-          .map {
-            $0.replacingOccurrences(of: ".mlpackage", with: "")
-              .replacingOccurrences(of: ".mlmodelc", with: "")
-          }
-        print("Found models in main bundle: \(models)")
-      } catch {
-        print("Error scanning main bundle: \(error)")
-      }
+    // First scan main bundle
+    do {
+      let bundleModels =
+        try Bundle.main.urls(forResourcesWithExtension: "mlmodelc", subdirectory: nil)?
+        .map { $0.deletingPathExtension().lastPathComponent } ?? []
+      models.append(contentsOf: bundleModels)
+      LogManager.shared.info("Found models in main bundle: \(bundleModels)")
+    } catch {
+      LogManager.shared.error("Error scanning main bundle", error: error)
     }
 
-    // Check Resources directory (without appending Contents/Resources again)
-    if let resourcesURL = Bundle.main.resourceURL {
-      do {
-        let files = try FileManager.default.contentsOfDirectory(atPath: resourcesURL.path)
-        let additionalModels = files.filter {
-          $0.hasSuffix(".mlpackage") || $0.hasSuffix(".mlmodelc")
-        }
-        .map {
-          $0.replacingOccurrences(of: ".mlpackage", with: "")
-            .replacingOccurrences(of: ".mlmodelc", with: "")
-        }
-        print("Found models in Resources: \(additionalModels)")
-        models.append(contentsOf: additionalModels)
-      } catch {
-        print("Error scanning Resources directory: \(error)")
-      }
+    let appURL = Bundle.main.bundleURL.appendingPathComponent("Contents/Resources")
+    // Then scan app's Resources directory
+
+    do {
+      let resourceContents = try FileManager.default.contentsOfDirectory(
+        at: appURL,
+        includingPropertiesForKeys: nil,
+        options: [.skipsHiddenFiles]
+      )
+
+      let additionalModels =
+        resourceContents
+        .filter { $0.pathExtension == "mlmodelc" }
+        .map { $0.deletingPathExtension().lastPathComponent }
+
+      models.append(contentsOf: additionalModels)
+      LogManager.shared.info("Found models in app Resources: \(additionalModels)")
+    } catch {
+      LogManager.shared.error("Error scanning app Resources directory", error: error)
     }
 
     // Remove duplicates and sort
     availableModels = Array(Set(models)).sorted()
-    print("Final available models: \(availableModels)")
+    LogManager.shared.info("Final available models: \(availableModels)")
 
     // If current model is not in available models, select first available
     if !availableModels.isEmpty && !availableModels.contains(modelName) {
@@ -185,6 +183,45 @@ class Settings: ObservableObject {
 
   func getColorForClass(_ className: String) -> String {
     return classColors[className] ?? boundingBoxColor
+  }
+
+  private func findModel() -> URL? {
+    // Get model name from settings
+    let modelName = Settings.shared.modelName.isEmpty ? "yolov8n" : Settings.shared.modelName
+    let formats = ["mlpackage", "mlmodelc"]
+
+    // First try the main bundle
+    for format in formats {
+      if let url = Bundle.main.url(forResource: modelName, withExtension: format) {
+        LogManager.shared.info("Found model in main bundle: \(url.lastPathComponent)")
+        return url
+      }
+    }
+
+    // If not found, try Resources directory if it exists
+    if let resourcesURL = Bundle.main.resourceURL?.appendingPathComponent("Contents/Resources"),
+      FileManager.default.fileExists(atPath: resourcesURL.path)
+    {
+      for format in formats {
+        let potentialURL = resourcesURL.appendingPathComponent("\(modelName).\(format)")
+        if FileManager.default.fileExists(atPath: potentialURL.path) {
+          LogManager.shared.info(
+            "Found model in Resources directory: \(potentialURL.lastPathComponent)")
+          return potentialURL
+        }
+      }
+
+      // Special case for .mlmodelc which is a directory
+      let mlmodelcURL = resourcesURL.appendingPathComponent("\(modelName).mlmodelc")
+      if FileManager.default.fileExists(atPath: mlmodelcURL.path) {
+        LogManager.shared.info(
+          "Found compiled model in Resources directory: \(mlmodelcURL.lastPathComponent)")
+        return mlmodelcURL
+      }
+    }
+
+    LogManager.shared.error("Model not found: \(modelName)")
+    return nil
   }
 }
 

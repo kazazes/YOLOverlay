@@ -173,4 +173,8 @@ class StatsManager: ObservableObject {
     gpuUsage = 0
     memoryUsage = 0
   }
+
+  func incrementDroppedFrames() {
+    droppedFrames += 1
+  }
 }

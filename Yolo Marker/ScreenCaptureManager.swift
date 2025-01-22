@@ -6,7 +6,7 @@ import VideoToolbox
 import Vision
 
 @MainActor
-class ScreenCaptureManager: ObservableObject {
+class ScreenCaptureManager: NSObject, ObservableObject {
   static let shared = ScreenCaptureManager()
 
   private var filter: SCContentFilter?
@@ -17,11 +17,13 @@ class ScreenCaptureManager: ObservableObject {
   private var statsManager = StatsManager()
   private var isProcessingFrame = false
   private var cancellables = Set<AnyCancellable>()
+  private let streamQueue = DispatchQueue(label: "com.kazazes.Yolo-Marker.stream")
 
   @Published var isRecording = false
   var stats: String { statsManager.getStatsString() }
 
-  private init() {
+  private override init() {
+    super.init()
     yoloManager.detectionHandler = { [weak self] results in
       self?.handleDetections(results)
     }
@@ -29,129 +31,138 @@ class ScreenCaptureManager: ObservableObject {
     // Observe FPS changes
     Settings.shared.$targetFPS
       .sink { [weak self] newFPS in
-        print("🎯 FPS setting changed to \(newFPS)")
-        Task { @MainActor in
-          if self?.isRecording == true {
-            print("🔄 Restarting capture to apply new frame rate...")
-            await self?.stopCapture()
-            await self?.startCapture()
-          }
-        }
+        self?.handleFPSChange(newFPS)
       }
       .store(in: &cancellables)
   }
 
+  private func handleFPSChange(_ newFPS: Double) {
+    LogManager.shared.info("FPS setting changed to \(newFPS)")
+    if isRecording {
+      LogManager.shared.notice("Restarting capture to apply new frame rate...")
+      Task {
+        await stopCapture()
+        await startCapture()
+      }
+    }
+  }
+
   func startCapture() async {
     guard !isRecording else {
-      print("⚠️ Capture already in progress")
+      LogManager.shared.notice("Capture already in progress")
       return
     }
 
-    do {
-      print("🎥 Starting screen capture...")
+    LogManager.shared.info("Starting screen capture...")
 
-      // Get screen content to capture
-      let content = try await SCShareableContent.current
-      guard let display = content.displays.first else {
-        print("❌ No screens available")
-        return
-      }
-      print("📺 Found primary display: \(display.width)x\(display.height)")
+    // Get shareable content
+    guard let content = try? await SCShareableContent.current else {
+      LogManager.shared.error("Failed to get shareable content")
+      return
+    }
 
-      // Find our overlay windows to exclude
-      print("🪟 Available windows:")
-      content.windows.forEach { window in
-        print(
-          "  • Title: \(window.title ?? "nil")\n    App: \(window.owningApplication?.applicationName ?? "")\n    Bundle: \(window.owningApplication?.bundleIdentifier ?? "")"
-        )
-      }
+    // Get the main display
+    guard let display = content.displays.first else {
+      LogManager.shared.error("No screens available")
+      return
+    }
 
-      // Create overlay window for each screen
-      @Sendable func createOverlayWindows() async -> [OverlayWindowController] {
-        let screens = NSScreen.screens
-        return await withTaskGroup(of: OverlayWindowController.self) { group in
-          for screen in screens {
-            group.addTask {
-              let controller = OverlayWindowController(screen: screen)
-              await MainActor.run {
-                controller.window?.orderFront(nil)
-              }
-              return controller
-            }
-          }
+    LogManager.shared.info("Found primary display: \(display.width)x\(display.height)")
 
-          var controllers: [OverlayWindowController] = []
-          for await controller in group {
-            controllers.append(controller)
-          }
-          return controllers
-        }
-      }
+    // Create overlay windows
+    overlayWindows = await createOverlayWindows()
+    LogManager.shared.info("Created \(overlayWindows.count) overlay windows")
 
-      overlayWindows = await createOverlayWindows()
-      print("🎨 Created \(overlayWindows.count) overlay windows")
+    // Wait for windows to register
+    LogManager.shared.debug("Waiting for windows to register...")
+    try? await Task.sleep(nanoseconds: 500_000_000)  // 500ms
 
-      // Wait a moment for windows to be created and registered
-      print("⏳ Waiting for windows to register...")
-      try await Task.sleep(for: .milliseconds(100))
-
-      // Get updated window list and create filter
-      let updatedContent = try await SCShareableContent.current
-      let overlayWindowsToExclude = updatedContent.windows.filter { window in
+    // Get updated window list and create filter
+    let updatedContent = try? await SCShareableContent.current
+    let overlayWindowsToExclude =
+      updatedContent?.windows.filter { window in
+        // First check bundle identifier
         guard window.owningApplication?.bundleIdentifier == "com.kazazes.Yolo-Marker" else {
           return false
         }
-        return window.title?.contains("Preferences") != true
+
+        // Exclude preference windows
+        guard window.title?.contains("Preferences") != true else {
+          return false
+        }
+
+        // Then verify it's one of our overlay windows
+        return overlayWindows.contains { controller in
+          if let windowNumber = controller.window?.windowNumber {
+            return windowNumber == window.windowID
+          }
+          return false
+        }
+      } ?? []
+    LogManager.shared.debug("Found \(overlayWindowsToExclude.count) windows to exclude")
+
+    // Create filter
+    let filter = SCContentFilter(
+      display: display,
+      excludingWindows: overlayWindowsToExclude
+    )
+    LogManager.shared.debug("Created screen capture filter")
+
+    // Configure stream
+    let configuration = SCStreamConfiguration()
+    configuration.width = Int(display.width)
+    configuration.height = Int(display.height)
+    configuration.minimumFrameInterval = CMTime(
+      value: 1, timescale: CMTimeScale(Settings.shared.targetFPS))
+    configuration.queueDepth = 5
+    configuration.showsCursor = false  // Exclude mouse pointer from capture
+    LogManager.shared.debug(
+      """
+      Stream configuration:
+      - Resolution: \(configuration.width)x\(configuration.height)
+      - FPS: \(Settings.shared.targetFPS)
+      - Queue Depth: \(configuration.queueDepth)
+      """)
+
+    do {
+      // Create stream output handler and store reference
+      streamOutput = StreamOutput { [weak self] buffer in
+        self?.processFrame(buffer)
       }
-      print("🎯 Found \(overlayWindowsToExclude.count) windows to exclude")
 
-      // Update the filter with the new window list
-      filter = try SCContentFilter(
-        display: display,
-        excludingWindows: overlayWindowsToExclude
-      )
-      print("✅ Created screen capture filter")
-
-      // Configure the stream
-      let configuration = SCStreamConfiguration()
-      configuration.width = Int(display.width)
-      configuration.height = Int(display.height)
-      configuration.minimumFrameInterval = CMTime(
-        value: 1, timescale: Int32(Settings.shared.targetFPS))
-      configuration.queueDepth = 5
-      configuration.showsCursor = false  // Exclude mouse pointer from capture
-      print(
-        "⚙️ Configured stream: \(configuration.width)x\(configuration.height) @ \(Settings.shared.targetFPS)fps"
-      )
-
-      // Create stream output handler
-      streamOutput = StreamOutput { [weak self] frame in
-        self?.processFrame(frame)
-      }
-
-      // Create and start the stream
-      guard let filter = filter, let streamOutput = streamOutput else { return }
+      // Create and configure stream
       stream = SCStream(filter: filter, configuration: configuration, delegate: streamOutput)
-      try stream?.addStreamOutput(streamOutput, type: .screen, sampleHandlerQueue: .global())
+
+      // Add stream output
+      if let streamOutput = streamOutput {
+        try await stream?.addStreamOutput(
+          streamOutput, type: .screen, sampleHandlerQueue: streamQueue)
+      }
       try await stream?.startCapture()
 
       isRecording = true
-      statsManager.recordFrame()
-
     } catch {
-      print("Failed to start capture: \(error)")
+      LogManager.shared.error("Failed to start capture", error: error)
+      // Clean up on error
+      stream = nil
+      streamOutput = nil
+      isRecording = false
     }
   }
 
   func stopCapture() async {
-    print("🛑 Stopping screen capture...")
-    do {
-      try await stream?.stopCapture()
-      stream = nil
-      filter = nil
+    LogManager.shared.info("Stopping screen capture...")
 
-      // Remove overlay windows
-      print("🧹 Removing \(overlayWindows.count) overlay windows")
+    do {
+      if let stream = stream, let streamOutput = streamOutput {
+        try await stream.stopCapture()
+        // Remove stream output before nulling references
+        try await stream.removeStreamOutput(streamOutput, type: .screen)
+        self.stream = nil
+        self.streamOutput = nil
+      }
+
+      LogManager.shared.debug("Removing \(overlayWindows.count) overlay windows")
       for controller in overlayWindows {
         await MainActor.run {
           controller.window?.orderOut(nil)
@@ -160,20 +171,36 @@ class ScreenCaptureManager: ObservableObject {
       overlayWindows.removeAll()
 
       isRecording = false
-      print("✅ Screen capture stopped successfully")
-
+      LogManager.shared.info("Screen capture stopped successfully")
     } catch {
-      print("❌ Failed to stop capture: \(error)")
+      LogManager.shared.error("Failed to stop capture", error: error)
+    }
+  }
+
+  private func createOverlayWindows() async -> [OverlayWindowController] {
+    return await withTaskGroup(of: OverlayWindowController.self) { group in
+      let screens = NSScreen.screens
+      for screen in screens {
+        group.addTask { @MainActor in
+          let controller = OverlayWindowController(screen: screen)
+          controller.window?.orderFront(nil)
+          return controller
+        }
+      }
+
+      var controllers: [OverlayWindowController] = []
+      for await controller in group {
+        controllers.append(controller)
+      }
+      return controllers
     }
   }
 
   private func processFrame(_ frame: CMSampleBuffer) {
     // Skip if we're still processing the previous frame
     guard !isProcessingFrame else {
-      statsManager.recordFrame()  // Record as dropped frame
-      if statsManager.droppedFrames % 100 == 0 {  // Log every 100th drop
-        print("⚠️ Dropped frame - total dropped: \(statsManager.droppedFrames)")
-      }
+      statsManager.incrementDroppedFrames()  // Record as dropped frame
+      handleDroppedFrame()
       return
     }
 
@@ -214,19 +241,25 @@ class ScreenCaptureManager: ObservableObject {
     // Update stats
     statsManager.updateDetections(detectedObjects)
   }
+
+  private func handleDroppedFrame() {
+    statsManager.incrementDroppedFrames()
+    LogManager.shared.notice("Dropped frame - total dropped: \(statsManager.droppedFrames)")
+  }
 }
 
 // MARK: - Stream Output Handler
 private class StreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
-  let frameHandler: (CMSampleBuffer) -> Void
+  private let frameHandler: (CMSampleBuffer) -> Void
 
   init(frameHandler: @escaping (CMSampleBuffer) -> Void) {
     self.frameHandler = frameHandler
     super.init()
   }
 
-  func stream(
-    _ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
+  nonisolated func stream(
+    _ stream: SCStream,
+    didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
     of type: SCStreamOutputType
   ) {
     if type == .screen {
@@ -234,8 +267,10 @@ private class StreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     }
   }
 
-  // Required SCStreamDelegate methods
-  func stream(_ stream: SCStream, didStopWithError error: Error) {
-    print("Stream stopped with error: \(error)")
+  nonisolated func stream(_ stream: SCStream, didStopWithError error: Error) {
+    LogManager.shared.error("Stream stopped with error", error: error)
+    Task { @MainActor in
+      ScreenCaptureManager.shared.isRecording = false
+    }
   }
 }

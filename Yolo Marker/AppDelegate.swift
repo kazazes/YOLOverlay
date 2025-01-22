@@ -43,6 +43,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Show preferences window at launch
     showPreferences()
+
+    // Restore log window state if it was open
+    if UserDefaults.standard.bool(forKey: "LogWindowVisible") {
+      showLogs()
+    }
+  }
+
+  func applicationWillTerminate(_ notification: Notification) {
+    // Save log window state
+    UserDefaults.standard.set(
+      logWindowController?.window?.isVisible ?? false, forKey: "LogWindowVisible")
   }
 
   private func setupObservers() {

@@ -2,27 +2,15 @@ import AppKit
 import SwiftUI
 
 class OverlayWindow: NSWindow {
-  init(contentRect: NSRect) {
-    super.init(
-      contentRect: contentRect,
-      styleMask: [.borderless],
-      backing: .buffered,
-      defer: false
-    )
+  init(screen: NSScreen) {
+    super.init(contentRect: .zero, styleMask: [], backing: .buffered, defer: false)
 
-    // Make the window transparent and floating
+    self.level = .floating
     self.backgroundColor = .clear
     self.isOpaque = false
     self.hasShadow = false
-
-    // Make it visible on all spaces
-    self.collectionBehavior = [.canJoinAllSpaces, .stationary]
-
-    // Keep it on top
-    self.level = .floating
-
-    // Allow click-through
     self.ignoresMouseEvents = true
+    self.collectionBehavior = [.canJoinAllSpaces, .stationary]
   }
 }
 
@@ -30,7 +18,13 @@ struct OverlayView: View {
   let detectedObjects: [DetectedObject]
   let screenFrame: CGRect
   @ObservedObject private var settings = Settings.shared
-  @StateObject private var tracker = ObjectTracker()
+  @ObservedObject private var tracker: ObjectTracker
+
+  init(detectedObjects: [DetectedObject], screenFrame: CGRect, tracker: ObjectTracker) {
+    self.detectedObjects = detectedObjects
+    self.screenFrame = screenFrame
+    self.tracker = tracker
+  }
 
   private func getColor(_ name: String) -> Color {
     switch name.lowercased() {
@@ -56,11 +50,7 @@ struct OverlayView: View {
       Color.clear
 
       // Draw bounding boxes
-      ForEach(
-        tracker.trackedObjects.sorted {
-          $0.rect.width * $0.rect.height > $1.rect.width * $1.rect.height
-        }
-      ) { object in
+      ForEach(tracker.sortedObjects) { object in
         let rect = calculateScreenRect(object.rect)
         let color = getColor(settings.getColorForClass(object.label))
           .opacity(object.alpha * settings.boundingBoxOpacity)
@@ -76,7 +66,7 @@ struct OverlayView: View {
           if settings.showLabels {
             // Find best label position that doesn't overlap with other boxes
             let labelPosition = findBestLabelPosition(
-              for: rect, avoiding: tracker.trackedObjects.map { calculateScreenRect($0.rect) })
+              for: rect, avoiding: tracker.sortedObjects.map { calculateScreenRect($0.rect) })
 
             Text("\(object.label) (\(Int(object.confidence * 100))%)")
               .font(.system(size: 12, weight: .bold))
@@ -92,8 +82,8 @@ struct OverlayView: View {
     .onAppear {
       tracker.update(with: detectedObjects)
     }
-    .onChange(of: detectedObjects.count) { _ in
-      tracker.update(with: detectedObjects)
+    .onChange(of: detectedObjects) { _, newDetections in
+      tracker.update(with: newDetections)
     }
     .frame(width: screenFrame.width, height: screenFrame.height)
   }
@@ -147,22 +137,44 @@ struct OverlayView: View {
 }
 
 class OverlayWindowController: NSWindowController {
-  convenience init(screen: NSScreen) {
-    let window = OverlayWindow(contentRect: screen.frame)
-    self.init(window: window)
-  }
+  private var hostingView: NSHostingView<OverlayView>?
+  private let tracker = ObjectTracker()
 
-  func updateDetections(_ detections: [DetectedObject]) {
-    guard let window = self.window,
-      let screen = window.screen
-    else { return }
+  init(screen: NSScreen) {
+    let window = OverlayWindow(screen: screen)
+    super.init(window: window)
 
+    // Create initial hosting view with empty detections
     let hostingView = NSHostingView(
       rootView: OverlayView(
-        detectedObjects: detections,
-        screenFrame: screen.frame
+        detectedObjects: [],
+        screenFrame: screen.frame,
+        tracker: tracker
       )
     )
     window.contentView = hostingView
+    self.hostingView = hostingView
+
+    // Show the window immediately
+    window.orderFront(nil)
+  }
+
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  func updateDetections(_ detections: [DetectedObject]) {
+    guard
+      let window = window,
+      let screen = window.screen,
+      let hostingView = self.hostingView
+    else { return }
+
+    // Update the root view instead of creating a new hosting view
+    hostingView.rootView = OverlayView(
+      detectedObjects: detections,
+      screenFrame: screen.frame,
+      tracker: tracker
+    )
   }
 }

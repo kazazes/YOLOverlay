@@ -3,231 +3,158 @@ import Foundation
 import QuartzCore
 
 struct TrackedObject: Identifiable {
-  let id = UUID()
+  let id: UUID
+  let label: String
   var rect: CGRect
   var confidence: Float
   var smoothedConfidence: Float
-  var label: String
-  var timestamp: TimeInterval
-  var velocity: CGPoint
   var alpha: CGFloat
+  var velocity: CGPoint
   var detectionCount: Int
   var positionHistory: [(CGPoint, CGSize)]  // Store recent positions and sizes
   var lastUpdateTime: TimeInterval  // For velocity calculation
+  private let smoothingFactor: CGFloat = 0.5
+
+  init(from detection: DetectedObject, id: UUID = UUID()) {
+    self.id = id
+    self.label = detection.label
+    self.rect = detection.boundingBox
+    self.confidence = detection.confidence
+    self.smoothedConfidence = detection.confidence
+    self.alpha = 0.3  // Start faint and fade in
+    self.velocity = .zero
+    self.detectionCount = 1
+    self.positionHistory = [
+      (
+        CGPoint(x: detection.boundingBox.midX, y: detection.boundingBox.midY),
+        CGSize(width: detection.boundingBox.width, height: detection.boundingBox.height)
+      )
+    ]
+    self.lastUpdateTime = CACurrentMediaTime()
+  }
+
+  mutating func update(with detection: DetectedObject, timeDelta: TimeInterval) {
+    // Update position history
+    let newCenter = CGPoint(x: detection.boundingBox.midX, y: detection.boundingBox.midY)
+    let newSize = CGSize(width: detection.boundingBox.width, height: detection.boundingBox.height)
+    positionHistory.append((newCenter, newSize))
+    if positionHistory.count > 5 {  // Keep last 5 positions
+      positionHistory.removeFirst()
+    }
+
+    // Calculate velocity
+    if timeDelta > 0 {
+      let dx = (newCenter.x - rect.midX) / CGFloat(timeDelta)
+      let dy = (newCenter.y - rect.midY) / CGFloat(timeDelta)
+      velocity = CGPoint(
+        x: velocity.x * 0.8 + dx * 0.2,  // Smooth velocity changes
+        y: velocity.y * 0.8 + dy * 0.2
+      )
+    }
+
+    // Smooth the transition
+    let t = CGFloat(min(1.0, timeDelta * 60.0 * smoothingFactor))  // 60 fps target
+    rect = rect.interpolated(to: detection.boundingBox, amount: t)
+
+    // Update confidence with smoothing
+    confidence = detection.confidence
+    smoothedConfidence += (detection.confidence - smoothedConfidence) * 0.15
+
+    // Update counters and timing
+    detectionCount += 1
+    lastUpdateTime = CACurrentMediaTime()
+
+    // Update alpha based on detection count
+    let targetAlpha: CGFloat = detectionCount >= 3 ? 1.0 : 0.3
+    alpha += (targetAlpha - alpha) * 0.2
+  }
 }
 
 class ObjectTracker: ObservableObject {
   @Published private(set) var trackedObjects: [TrackedObject] = []
+  @Published private(set) var sortedObjects: [TrackedObject] = []
+
   private let settings = Settings.shared
-  private let iouThreshold: CGFloat = 0.25  // Lowered for better matching
-  private let confidenceSmoothingFactor: Float = 0.15  // More gradual confidence changes
+  private let iouThreshold: CGFloat = 0.25
+  private let confidenceSmoothingFactor: Float = 0.15
   private let minDetectionCount = 3
-  private let maxHistoryLength = 5  // Number of positions to keep in history
-  private let confidenceHysteresis: Float = 0.1  // Prevent threshold flickering
+  private let maxHistoryLength = 5
+  private let confidenceHysteresis: Float = 0.1
+  private let maxTrackingDistance: CGFloat = 0.3
+
+  private var lastUpdateTime = Date()
+  private var nextObjectId = 0
 
   func update(with detections: [DetectedObject]) {
-    guard settings.enableSmoothing else {
-      trackedObjects = detections.map { detection in
-        TrackedObject(
-          rect: detection.boundingBox,
-          confidence: detection.confidence,
-          smoothedConfidence: detection.confidence,
-          label: detection.label,
-          timestamp: CACurrentMediaTime(),
-          velocity: .zero,
-          alpha: 1.0,
-          detectionCount: 1,
-          positionHistory: [
-            (
-              CGPoint(x: detection.boundingBox.midX, y: detection.boundingBox.midY),
-              CGSize(width: detection.boundingBox.width, height: detection.boundingBox.height)
-            )
-          ],
-          lastUpdateTime: CACurrentMediaTime()
-        )
-      }
-      return
-    }
+    let currentTime = Date()
+    let timeDelta = currentTime.timeIntervalSince(lastUpdateTime)
+    lastUpdateTime = currentTime
 
-    let currentTime = CACurrentMediaTime()
-    var newTrackedObjects: [TrackedObject] = []
-    var matchedDetections = Set<UUID>()
+    var updatedObjects: [TrackedObject] = []
+    var usedDetections = Set<Int>()
 
-    // First, try to update existing objects with new detections
+    // First, try to update existing objects with the closest matching detection
     for var existingObject in trackedObjects {
-      if let (detection, iou) = findBestMatch(existingObject.rect, in: detections) {
-        let timeDelta = currentTime - existingObject.lastUpdateTime
-        let smoothingFactor = CGFloat(settings.smoothingFactor) * 0.5  // Reduce smoothing factor
-
-        // Calculate new position and size
-        let newCenter = CGPoint(x: detection.boundingBox.midX, y: detection.boundingBox.midY)
-        let newSize = CGSize(
-          width: detection.boundingBox.width, height: detection.boundingBox.height)
-
-        // Update position history
-        var history = existingObject.positionHistory
-        history.append((newCenter, newSize))
-        if history.count > maxHistoryLength {
-          history.removeFirst()
-        }
-        existingObject.positionHistory = history
-
-        // Calculate smoothed position and size using history
-        let smoothedPosition = calculateSmoothedPosition(history)
-        let smoothedSize = calculateSmoothedSize(history)
-
-        // Update rect with smoothed values
-        existingObject.rect = CGRect(
-          x: smoothedPosition.x - smoothedSize.width / 2,
-          y: smoothedPosition.y - smoothedSize.height / 2,
-          width: smoothedSize.width,
-          height: smoothedSize.height
-        )
-
-        // Calculate and smooth velocity
-        if timeDelta > 0 {
-          let dx = (newCenter.x - existingObject.rect.midX) / CGFloat(timeDelta)
-          let dy = (newCenter.y - existingObject.rect.midY) / CGFloat(timeDelta)
-          let newVelocity = CGPoint(x: dx, y: dy)
-          existingObject.velocity = CGPoint(
-            x: existingObject.velocity.x * 0.8 + newVelocity.x * 0.2,
-            y: existingObject.velocity.y * 0.8 + newVelocity.y * 0.2
-          )
-        }
-
-        // Smooth confidence with hysteresis
-        let confidenceThreshold = settings.confidenceThreshold
-        if detection.confidence >= confidenceThreshold - confidenceHysteresis {
-          existingObject.confidence = detection.confidence
-          existingObject.smoothedConfidence +=
-            (detection.confidence - existingObject.smoothedConfidence) * confidenceSmoothingFactor
-        }
-
-        existingObject.timestamp = currentTime
-        existingObject.lastUpdateTime = currentTime
-        existingObject.detectionCount += 1
-
-        // Gradually increase alpha based on detection count
-        let targetAlpha: CGFloat = existingObject.detectionCount >= minDetectionCount ? 1.0 : 0.3
-        existingObject.alpha += (targetAlpha - existingObject.alpha) * 0.2
-
-        newTrackedObjects.append(existingObject)
-        matchedDetections.insert(detection.id)
-      } else {
-        // Object wasn't matched - handle fade out
-        let age = currentTime - existingObject.timestamp
-        if age < settings.objectPersistence {
-          // Predict position based on velocity and history
-          let predictedCenter = CGPoint(
-            x: existingObject.rect.midX + existingObject.velocity.x * CGFloat(age),
-            y: existingObject.rect.midY + existingObject.velocity.y * CGFloat(age)
-          )
-          existingObject.rect = CGRect(
-            x: predictedCenter.x - existingObject.rect.width / 2,
-            y: predictedCenter.y - existingObject.rect.height / 2,
-            width: existingObject.rect.width,
-            height: existingObject.rect.height
-          )
-
-          // Smooth fade out
-          let fadeProgress = CGFloat(age / settings.objectPersistence)
-          let targetAlpha: CGFloat = 1.0 - fadeProgress
-          existingObject.alpha += (targetAlpha - existingObject.alpha) * 0.2
-          existingObject.smoothedConfidence *= (1.0 - Float(fadeProgress) * 0.3)
-
-          if existingObject.smoothedConfidence
-            > (settings.confidenceThreshold - confidenceHysteresis) * 0.5
-          {
-            newTrackedObjects.append(existingObject)
-          }
+      if let (detection, _) = findBestMatch(
+        for: existingObject, in: detections, excluding: usedDetections)
+      {
+        existingObject.update(with: detection, timeDelta: timeDelta)
+        updatedObjects.append(existingObject)
+        if let index = detections.firstIndex(where: { $0.id == detection.id }) {
+          usedDetections.insert(index)
         }
       }
     }
 
-    // Add new detections that weren't matched
-    for detection in detections {
-      if !matchedDetections.contains(detection.id) {
-        if detection.confidence >= settings.confidenceThreshold {
-          let center = CGPoint(x: detection.boundingBox.midX, y: detection.boundingBox.midY)
-          let size = CGSize(
-            width: detection.boundingBox.width, height: detection.boundingBox.height)
-          let newObject = TrackedObject(
-            rect: detection.boundingBox,
-            confidence: detection.confidence,
-            smoothedConfidence: detection.confidence,
-            label: detection.label,
-            timestamp: currentTime,
-            velocity: .zero,
-            alpha: 0.3,  // Start very faint
-            detectionCount: 1,
-            positionHistory: [(center, size)],
-            lastUpdateTime: currentTime
-          )
-          newTrackedObjects.append(newObject)
+    // Create new tracked objects for remaining detections
+    for (index, detection) in detections.enumerated() {
+      if !usedDetections.contains(index) {
+        let newObject = TrackedObject(from: detection, id: UUID())
+        updatedObjects.append(newObject)
+      }
+    }
+
+    // Update the tracked objects
+    trackedObjects = updatedObjects
+
+    // Update sorted cache
+    sortedObjects = trackedObjects.sorted {
+      $0.rect.width * $0.rect.height > $1.rect.width * $1.rect.height
+    }
+  }
+
+  private func findBestMatch(
+    for object: TrackedObject,
+    in detections: [DetectedObject],
+    excluding usedIndices: Set<Int>
+  ) -> (DetectedObject, CGFloat)? {
+    var bestMatch: (detection: DetectedObject, distance: CGFloat, index: Int)?
+
+    for (index, detection) in detections.enumerated() {
+      // Skip if this detection is already used or labels don't match
+      if usedIndices.contains(index) || detection.label != object.label {
+        continue
+      }
+
+      let dist = distance(between: object.rect, and: detection.boundingBox)
+
+      // Only consider detections within the maximum tracking distance
+      if dist < maxTrackingDistance {
+        if bestMatch == nil || dist < bestMatch!.distance {
+          bestMatch = (detection, dist, index)
         }
       }
     }
 
-    // Sort by confidence and update
-    trackedObjects = newTrackedObjects.sorted { $0.smoothedConfidence > $1.smoothedConfidence }
+    return bestMatch.map { ($0.detection, $0.distance) }
   }
 
-  private func calculateSmoothedPosition(_ history: [(CGPoint, CGSize)]) -> CGPoint {
-    var x: CGFloat = 0
-    var y: CGFloat = 0
-    var totalWeight: CGFloat = 0
+  private func distance(between rect1: CGRect, and rect2: CGRect) -> CGFloat {
+    let center1 = CGPoint(x: rect1.midX, y: rect1.midY)
+    let center2 = CGPoint(x: rect2.midX, y: rect2.midY)
 
-    for (i, (position, _)) in history.enumerated() {
-      let weight = CGFloat(i + 1)
-      x += position.x * weight
-      y += position.y * weight
-      totalWeight += weight
-    }
-
-    return CGPoint(x: x / totalWeight, y: y / totalWeight)
-  }
-
-  private func calculateSmoothedSize(_ history: [(CGPoint, CGSize)]) -> CGSize {
-    var width: CGFloat = 0
-    var height: CGFloat = 0
-    var totalWeight: CGFloat = 0
-
-    for (i, (_, size)) in history.enumerated() {
-      let weight = CGFloat(i + 1)
-      width += size.width * weight
-      height += size.height * weight
-      totalWeight += weight
-    }
-
-    return CGSize(width: width / totalWeight, height: height / totalWeight)
-  }
-
-  private func findBestMatch(_ rect: CGRect, in detections: [DetectedObject]) -> (
-    DetectedObject, CGFloat
-  )? {
-    guard !detections.isEmpty else { return nil }
-
-    var bestMatch: (detection: DetectedObject, iou: CGFloat) = (detections[0], 0)
-    let center = CGPoint(x: rect.midX, y: rect.midY)
-
-    for detection in detections {
-      let intersection = rect.intersection(detection.boundingBox)
-      let union = rect.union(detection.boundingBox)
-      var iou = intersection.width * intersection.height / (union.width * union.height)
-
-      // Consider distance between centers for better matching
-      let detectionCenter = CGPoint(x: detection.boundingBox.midX, y: detection.boundingBox.midY)
-      let distance = hypot(center.x - detectionCenter.x, center.y - detectionCenter.y)
-      let distanceWeight = 1.0 - min(distance / max(rect.width, rect.height), 1.0)
-
-      // Adjust IOU based on distance
-      iou *= distanceWeight
-
-      if iou > bestMatch.iou {
-        bestMatch = (detection, iou)
-      }
-    }
-
-    return bestMatch.iou > iouThreshold ? bestMatch : nil
+    let dx = center1.x - center2.x
+    let dy = center1.y - center2.y
+    return sqrt(dx * dx + dy * dy)
   }
 }

@@ -3,6 +3,13 @@ import CoreML
 import QuartzCore
 import Vision
 
+// MARK: - Model Error
+enum ModelError: Error {
+  case modelNotFound
+  case modelLoadError(Error)
+  case visionError(Error)
+}
+
 // Helper struct to track objects over time
 private struct YOLOTrackedObject {
   var label: String
@@ -74,119 +81,79 @@ class YOLOModelManager {
   }
 
   private func setupModel() {
+    Task {
+      do {
+        visionModel = try await loadModel()
+        await setupDetectionRequest()
+      } catch {
+        LogManager.shared.error("Failed to setup model", error: error)
+      }
+    }
+  }
+
+  private func loadModel() async throws -> VNCoreMLModel {
+    guard let modelURL = findModel() else {
+      LogManager.shared.error("Could not find model in any format")
+      throw ModelError.modelNotFound
+    }
+
+    LogManager.shared.debug("Found model at path: \(modelURL.path)")
+
     do {
-      var modelURL: URL?
-
-      // Get model name from settings
-      let modelName = Settings.shared.modelName.isEmpty ? "yolov8n" : Settings.shared.modelName
-      let formats = ["mlpackage", "mlmodelc"]
-
-      // First try the main bundle
-      for format in formats {
-        if let url = Bundle.main.url(forResource: modelName, withExtension: format) {
-          modelURL = url
-          break
-        }
-      }
-
-      // If not found, try Resources directory
-      if modelURL == nil,
-        let resourcesURL = Bundle.main.resourceURL?.appendingPathComponent("Contents/Resources")
-      {
-        for format in formats {
-          let potentialURL = resourcesURL.appendingPathComponent("\(modelName).\(format)")
-          if FileManager.default.fileExists(atPath: potentialURL.path) {
-            modelURL = potentialURL
-            break
-          }
-        }
-
-        // Special case for .mlmodelc which is a directory
-        let mlmodelcURL = resourcesURL.appendingPathComponent("\(modelName).mlmodelc")
-        if FileManager.default.fileExists(atPath: mlmodelcURL.path) {
-          modelURL = mlmodelcURL
-        }
-      }
-
-      guard let modelURL = modelURL else {
-        print("Error: Could not find model in any format")
-        return
-      }
-
-      print("Found model at path: \(modelURL.path)")
-
       let config = MLModelConfiguration()
       config.computeUnits = .all
 
+      let mlModel = try await MLModel.load(contentsOf: modelURL, configuration: config)
+      LogManager.shared.info("Successfully loaded MLModel")
+
       do {
-        let model = try MLModel(contentsOf: modelURL, configuration: config)
-        print("Successfully loaded MLModel")
-
-        // Extract model information
-        let modelDesc = model.modelDescription
-
-        // Get class labels directly from the model
-        let classLabels = modelDesc.classLabels as? [String] ?? []
-
-        // Get additional metadata
-        let metadata = modelDesc.metadata
-        let description =
-          metadata[MLModelMetadataKey.description] as? String ?? "YOLOv8 Object Detection Model"
-        let version = metadata[MLModelMetadataKey.versionString] as? String ?? ""
-        let modelInfo = "\(description) (v\(version))"
-
-        // Update settings with model information
-        Settings.shared.updateModelInfo(
-          name: modelName,
-          description: modelInfo,
-          classes: classLabels
-        )
-
-        do {
-          visionModel = try VNCoreMLModel(for: model)
-          print("Successfully created VNCoreMLModel")
-
-          detectionRequest = VNCoreMLRequest(model: visionModel!) { [weak self] request, error in
-            if let error = error {
-              print("Detection error: \(error)")
-              return
-            }
-            self?.processResults(request)
-          }
-          detectionRequest?.imageCropAndScaleOption = .scaleFit
-          detectionRequest?.preferBackgroundProcessing = true
-          print("Successfully created VNCoreMLRequest")
-        } catch {
-          print("Failed to create VNCoreMLModel: \(error)")
-        }
+        let model = try VNCoreMLModel(for: mlModel)
+        LogManager.shared.info("Successfully created VNCoreMLModel")
+        return model
       } catch {
-        print("Failed to load MLModel: \(error)")
+        LogManager.shared.error("Detection error", error: error)
+        throw ModelError.visionError(error)
       }
     } catch {
-      print("Unexpected error: \(error)")
+      LogManager.shared.error("Failed to load MLModel", error: error)
+      throw ModelError.modelLoadError(error)
     }
   }
 
-  func detect(in image: CGImage) {
-    guard let request = detectionRequest else {
-      print("Detection request not initialized")
+  private func setupDetectionRequest() async {
+    do {
+      let model = try await loadModel()
+      detectionRequest = VNCoreMLRequest(model: model) { [weak self] request, error in
+        if let error = error {
+          LogManager.shared.error("Detection request error", error: error)
+          return
+        }
+        self?.processDetectionResults(request)
+      }
+      detectionRequest?.imageCropAndScaleOption = .scaleFit
+      LogManager.shared.info("Successfully created VNCoreMLRequest")
+    } catch let error as ModelError {
+      switch error {
+      case .visionError(let err):
+        LogManager.shared.error("Failed to create VNCoreMLModel", error: err)
+      case .modelLoadError(let err):
+        LogManager.shared.error("Failed to load MLModel", error: err)
+      case .modelNotFound:
+        LogManager.shared.error("Model not found")
+      }
+    } catch {
+      LogManager.shared.fault("Unexpected error", error: error)
+    }
+  }
+
+  private func processDetectionResults(_ request: VNRequest) {
+    guard let detectionRequest = detectionRequest else {
+      LogManager.shared.error("Detection request not initialized")
       return
     }
 
-    let handler = VNImageRequestHandler(
-      cgImage: image,
-      orientation: .up
-    )
-
-    // Ensure we're not queueing multiple requests simultaneously
-    DispatchQueue.global(qos: .userInitiated).sync {
-      try? handler.perform([request])
-    }
-  }
-
-  func processResults(_ request: VNRequest) {
     guard let results = request.results as? [VNRecognizedObjectObservation] else {
-      print("No detection results or invalid type")
+      LogManager.shared.error("No detection results or invalid type")
       return
     }
 
@@ -272,7 +239,7 @@ class YOLOModelManager {
     // Only log if there's a significant change in detections
     if smoothedResults.count != previousResultCount {
       previousResultCount = smoothedResults.count
-      print("Filtered detections: \(smoothedResults.count)")
+      LogManager.shared.debug("Filtered detections: \(smoothedResults.count)")
     }
 
     // Pass smoothed results to handler
@@ -281,6 +248,47 @@ class YOLOModelManager {
 
   // Track previous detection count to reduce logging
   private var previousResultCount: Int = 0
+
+  private func findModel() -> URL? {
+    // Get model name from settings
+    let modelName = Settings.shared.modelName.isEmpty ? "yolov8n" : Settings.shared.modelName
+    let formats = ["mlpackage", "mlmodelc"]
+
+    // First try the main bundle
+    for format in formats {
+      if let url = Bundle.main.url(forResource: modelName, withExtension: format) {
+        return url
+      }
+    }
+
+    // If not found, try Resources directory
+    if let resourcesURL = Bundle.main.resourceURL?.appendingPathComponent("Contents/Resources") {
+      for format in formats {
+        let potentialURL = resourcesURL.appendingPathComponent("\(modelName).\(format)")
+        if FileManager.default.fileExists(atPath: potentialURL.path) {
+          return potentialURL
+        }
+      }
+
+      // Special case for .mlmodelc which is a directory
+      let mlmodelcURL = resourcesURL.appendingPathComponent("\(modelName).mlmodelc")
+      if FileManager.default.fileExists(atPath: mlmodelcURL.path) {
+        return mlmodelcURL
+      }
+    }
+
+    return nil
+  }
+
+  func detect(in image: CGImage) {
+    guard let request = detectionRequest else {
+      LogManager.shared.error("Detection request not initialized")
+      return
+    }
+
+    let handler = VNImageRequestHandler(cgImage: image, orientation: .up)
+    try? handler.perform([request])
+  }
 }
 
 struct DetectedObject: Identifiable, Equatable {
