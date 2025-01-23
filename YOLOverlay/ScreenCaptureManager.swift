@@ -73,32 +73,35 @@ class ScreenCaptureManager: NSObject, ObservableObject {
     overlayWindows = await createOverlayWindows()
     LogManager.shared.info("Created \(overlayWindows.count) overlay windows")
 
-    // Wait for windows to register
+    // Wait longer for windows to register and become visible
     LogManager.shared.debug("Waiting for windows to register...")
-    try? await Task.sleep(nanoseconds: 500_000_000)  // 500ms
+    try? await Task.sleep(nanoseconds: 1_000_000_000)  // 1 second
 
     // Get updated window list and create filter
-    let updatedContent = try? await SCShareableContent.current
-    let overlayWindowsToExclude =
-      updatedContent?.windows.filter { window in
-        // First check bundle identifier
-        guard window.owningApplication?.bundleIdentifier == "com.kazazes.Yolo-Marker" else {
-          return false
-        }
+    guard let updatedContent = try? await SCShareableContent.current else {
+      LogManager.shared.error("Failed to get updated window list")
+      return
+    }
 
-        // Exclude preference windows
-        guard window.title?.contains("Preferences") != true else {
-          return false
-        }
+    // Get our window IDs for more reliable filtering
+    let overlayWindowIDs = Set(overlayWindows.compactMap { $0.window?.windowNumber })
+    LogManager.shared.debug("Overlay window IDs: \(overlayWindowIDs)")
 
-        // Then verify it's one of our overlay windows
-        return overlayWindows.contains { controller in
-          if let windowNumber = controller.window?.windowNumber {
-            return windowNumber == window.windowID
-          }
-          return false
-        }
-      } ?? []
+    let overlayWindowsToExclude = updatedContent.windows.filter { window in
+      // First check bundle identifier
+      guard window.owningApplication?.bundleIdentifier == Bundle.main.bundleIdentifier else {
+        return false
+      }
+
+      // Exclude preference windows
+      guard window.title?.contains("Preferences") != true else {
+        return false
+      }
+
+      // Then verify it's one of our overlay windows by ID
+        return overlayWindowIDs.contains(Int(window.windowID))
+    }
+
     LogManager.shared.debug("Found \(overlayWindowsToExclude.count) windows to exclude")
 
     // Create filter
