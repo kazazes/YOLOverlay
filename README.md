@@ -2,7 +2,7 @@
 
 > Real-time object detection overlay for macOS using YOLO models with smooth tracking, performance monitoring, and configurable settings.
 
-[HERO GIF/VIDEO PLACEHOLDER - Show the app in action with bounding boxes tracking objects]
+[![YOLOverlay Demo](demo.gif)](https://youtu.be/hs6BHrOaC0k)
 
 [![GitHub stars](https://img.shields.io/github/stars/kazazes/YOLOverlay.svg?style=social&label=Star&maxAge=2592000)](https://github.com/kazazes/YOLOverlay/stargazers/)
 [![macOS](https://img.shields.io/badge/platform-macOS-lightgrey.svg)](https://www.apple.com/macos)
@@ -86,6 +86,42 @@
 2. Adjust settings with ⌘,
 3. Monitor performance with ⌘L
 4. Filter and customize as needed
+
+## 🤖 Adding Custom Models
+
+YOLOverlay supports YOLO models in CoreML format (`.mlpackage`). To add a new model:
+
+1. **Convert YOLO Model**:
+
+   ```bash
+   # Create Python virtual environment
+   python -m venv .venv
+   source .venv/bin/activate
+
+   # Install requirements
+   pip install -r requirements.txt
+
+   # Convert model (e.g., YOLOv8n)
+   ./convert_yolo.py v8 n
+   ```
+
+   This will create a `.mlpackage` file in the project directory.
+
+2. **Add to Xcode Project**:
+
+   - Open the project in Xcode
+   - Right-click on the `YOLOverlay` group
+   - Select "Add Files to YOLOverlay..."
+   - Choose the `.mlpackage` file
+   - Ensure "Copy items if needed" is checked
+   - Click "Add"
+
+3. **Build and Run**:
+   - Clean the build folder (Shift+⌘+K)
+   - Build the project (⌘B)
+   - Run the app (⌘R)
+
+The new model will appear in the Model tab of Preferences.
 
 ## 🏆 Credits
 
