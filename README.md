@@ -99,6 +99,8 @@
   ./convert_yolo.py 11 s
   ./convert_yolo.py 11 l
   ./convert_yolo.py 11 x
+
+  # Note: these downloads are large, you can also remove a reference in Xcode
   ```
 4. Hit run in Xcode
 5. Get first place on macOS 😎
