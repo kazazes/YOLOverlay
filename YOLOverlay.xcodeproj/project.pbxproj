@@ -75,6 +75,7 @@
 		0F3EE8312D414C5500A1CBC2 /* Yolo_MarkerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Yolo_MarkerApp.swift; sourceTree = "<group>"; };
 		0F3EE8322D414C5500A1CBC2 /* YOLOModelManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YOLOModelManager.swift; sourceTree = "<group>"; };
 		0F983B712D44E3630002119C /* Color+hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+hex.swift"; sourceTree = "<group>"; };
+		0F983B732D44E6CB0002119C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -159,6 +160,7 @@
 		0F3EE8332D414C5500A1CBC2 /* YOLOverlay */ = {
 			isa = PBXGroup;
 			children = (
+				0F983B732D44E6CB0002119C /* Info.plist */,
 				0F3EE8222D414C5500A1CBC2 /* Preview Content */,
 				0F3EE8232D414C5500A1CBC2 /* AppDelegate.swift */,
 				0F3EE8242D414C5500A1CBC2 /* Assets.xcassets */,
@@ -281,6 +283,8 @@
 			);
 			mainGroup = 0F3EE75A2D40E13F00A1CBC2;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0F3EE7642D40E13F00A1CBC2 /* Products */;
 			projectDirPath = "";
@@ -510,6 +514,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YOLOverlay/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = YOLOverlay;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -538,6 +544,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YOLOverlay/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = YOLOverlay;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
