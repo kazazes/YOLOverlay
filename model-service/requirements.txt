@@ -1,0 +1,17 @@
+fastapi>=0.104.1
+uvicorn>=0.24.0
+pydantic>=2.5.2
+ultralytics>=8.3.67
+torch>=2.1.1
+coremltools>=7.1
+python-multipart>=0.0.6
+requests>=2.31.0 
+python-dotenv>=1.0.0  # For loading .env files
+
+boto3>=1.28.0  # For R2 compatibility
+types-requests  # For request stubs
+types-boto3  # For boto3 stubs
+
+# Testing
+pytest>=7.4.3
+httpx>=0.25.2  # Required for FastAPI TestClient
