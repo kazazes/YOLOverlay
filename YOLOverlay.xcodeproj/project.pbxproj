@@ -28,6 +28,7 @@
 		0F3EE8412D414C5600A1CBC2 /* LogWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8282D414C5500A1CBC2 /* LogWindow.swift */; };
 		0F3EE8422D414C5600A1CBC2 /* YOLOModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8322D414C5500A1CBC2 /* YOLOModelManager.swift */; };
 		0F3EE8432D414C5600A1CBC2 /* LogWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8292D414C5500A1CBC2 /* LogWindowController.swift */; };
+		0F983B722D44E3630002119C /* Color+hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F983B712D44E3630002119C /* Color+hex.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +74,7 @@
 		0F3EE8302D414C5500A1CBC2 /* YOLOverlay.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YOLOverlay.entitlements; sourceTree = "<group>"; };
 		0F3EE8312D414C5500A1CBC2 /* Yolo_MarkerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Yolo_MarkerApp.swift; sourceTree = "<group>"; };
 		0F3EE8322D414C5500A1CBC2 /* YOLOModelManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YOLOModelManager.swift; sourceTree = "<group>"; };
+		0F983B712D44E3630002119C /* Color+hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+hex.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -174,6 +176,7 @@
 				0F3EE8302D414C5500A1CBC2 /* YOLOverlay.entitlements */,
 				0F3EE8312D414C5500A1CBC2 /* Yolo_MarkerApp.swift */,
 				0F3EE8322D414C5500A1CBC2 /* YOLOModelManager.swift */,
+				0F983B712D44E3630002119C /* Color+hex.swift */,
 			);
 			path = YOLOverlay;
 			sourceTree = "<group>";
@@ -330,6 +333,7 @@
 				0F3EE8392D414C5600A1CBC2 /* ScreenCaptureManager.swift in Sources */,
 				0F3EE83A2D414C5600A1CBC2 /* BoundingBoxView.swift in Sources */,
 				0F3EE83B2D414C5600A1CBC2 /* ObjectTracker.swift in Sources */,
+				0F983B722D44E3630002119C /* Color+hex.swift in Sources */,
 				0F3EE83C2D414C5600A1CBC2 /* Settings.swift in Sources */,
 				0F3EE83D2D414C5600A1CBC2 /* ContentView.swift in Sources */,
 				0F3EE83E2D414C5600A1CBC2 /* PreferencesView.swift in Sources */,

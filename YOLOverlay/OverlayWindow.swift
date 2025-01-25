@@ -27,6 +27,12 @@ struct OverlayView: View {
   }
 
   private func getColor(_ name: String) -> Color {
+    // If the string starts with #, treat it as a hex color
+    if name.starts(with: "#") {
+      return Color(hex: name)
+    }
+
+    // Otherwise, treat it as a named color
     switch name.lowercased() {
     case "red": return .red
     case "blue": return .blue

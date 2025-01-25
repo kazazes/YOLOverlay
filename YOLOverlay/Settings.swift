@@ -78,17 +78,10 @@ class Settings: ObservableObject {
   ]
 
   private func generateRandomColor() -> String {
-    let hue = Double.random(in: 0...1)
-    let saturation = Double.random(in: 0.7...0.9)
-    let brightness = Double.random(in: 0.9...1.0)
-
-    let color = NSColor(
-      calibratedHue: hue, saturation: saturation, brightness: brightness, alpha: 1.0)
-    let red = UInt8(round(color.redComponent * 255))
-    let green = UInt8(round(color.greenComponent * 255))
-    let blue = UInt8(round(color.blueComponent * 255))
-
-    return String(format: "#%02X%02X%02X", red, green, blue)
+    let r = UInt8.random(in: 128...255)  // Brighter colors
+    let g = UInt8.random(in: 128...255)
+    let b = UInt8.random(in: 128...255)
+    return String(format: "#%02X%02X%02X", r, g, b)
   }
 
   private init() {

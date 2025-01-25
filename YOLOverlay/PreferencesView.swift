@@ -86,9 +86,9 @@ private struct CaptureButton: View {
   }
 }
 
-
 // MARK: - Detected Classes Grid
 private struct DetectedClassesGrid: View {
+  @ObservedObject var settings: Settings
   let classes: [String]
 
   var body: some View {
@@ -98,32 +98,44 @@ private struct DetectedClassesGrid: View {
           .foregroundColor(.secondary)
           .padding()
       } else {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], spacing: 8) {
-          ForEach(classes, id: \.self) { className in
-            HStack(spacing: 4) {
-              Circle()
-                .fill(generateRandomColor())
-                .frame(width: 8, height: 8)
-              Text(className)
-                .font(.system(size: 12))
-            }
-            .padding(.vertical, 4)
-            .padding(.horizontal, 8)
-            .background(Color(.controlBackgroundColor))
-            .cornerRadius(4)
-          }
-        }
-        .padding(8)
+        ClassGridContent(classes: classes, classColors: settings.classColors)
       }
     }
   }
+}
 
-  private func generateRandomColor() -> Color {
-    Color(
-      red: Double.random(in: 0.5...1.0),
-      green: Double.random(in: 0.5...1.0),
-      blue: Double.random(in: 0.5...1.0)
-    )
+// MARK: - Class Grid Content
+private struct ClassGridContent: View {
+  let classes: [String]
+  let classColors: [String: String]
+
+  var body: some View {
+    LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], spacing: 8) {
+      ForEach(classes, id: \.self) { className in
+        ClassGridItem(className: className, colorHex: classColors[className] ?? "#FF0000")
+      }
+    }
+    .padding(8)
+  }
+}
+
+// MARK: - Class Grid Item
+private struct ClassGridItem: View {
+  let className: String
+  let colorHex: String
+
+  var body: some View {
+    HStack(spacing: 4) {
+      Circle()
+        .fill(Color(hex: colorHex))
+        .frame(width: 8, height: 8)
+      Text(className)
+        .font(.system(size: 12))
+    }
+    .padding(.vertical, 4)
+    .padding(.horizontal, 8)
+    .background(Color(.controlBackgroundColor))
+    .cornerRadius(4)
   }
 }
 
@@ -156,7 +168,7 @@ struct ModelSettingsView: View {
       }
 
       GroupBox("Detected Classes") {
-        DetectedClassesGrid(classes: settings.modelClasses)
+        DetectedClassesGrid(settings: settings, classes: settings.modelClasses)
       }
     }
     .padding()
