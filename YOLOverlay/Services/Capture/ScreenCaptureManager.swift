@@ -269,6 +269,7 @@ class ScreenCaptureManager: NSObject, ObservableObject {
               classColors: Settings.shared.classColors,
               classLabels: labels,
               opacity: Settings.shared.segmentationOpacity,
+              threshold: Settings.shared.confidenceThreshold,
               captureFrame: screenFrame  // Pass the screen frame
             )
           }
@@ -300,7 +301,9 @@ class ScreenCaptureManager: NSObject, ObservableObject {
           mask: mask,
           classColors: Settings.shared.classColors,
           classLabels: classes,
-          opacity: Settings.shared.segmentationOpacity
+          opacity: Settings.shared.segmentationOpacity,
+          threshold: Settings.shared.confidenceThreshold,
+          captureFrame: window.window?.screen?.frame
         )
       }
       return

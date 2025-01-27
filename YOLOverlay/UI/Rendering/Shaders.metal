@@ -9,6 +9,7 @@ kernel void segmentationKernel(
     constant uint& height [[buffer(3)]],
     constant uint& numClasses [[buffer(4)]],
     constant float& opacity [[buffer(5)]],
+    constant float& threshold [[buffer(6)]],
     uint2 gid [[thread_position_in_grid]])
 {
     // Check bounds
@@ -43,7 +44,6 @@ kernel void segmentationKernel(
     );
     
     // Apply threshold and opacity
-    const float threshold = 0.1;  // Low threshold to see more segments
     float alpha = maxProb > threshold ? opacity * maxProb : 0.0;
     
     // Write output

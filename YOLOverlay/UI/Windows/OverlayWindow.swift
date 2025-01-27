@@ -104,7 +104,8 @@ class OverlayWindowController: NSWindowController {
     classColors: [String: String], 
     classLabels: [String], 
     opacity: Double,
-    captureFrame: CGRect? = nil  // Add optional capture frame parameter
+    threshold: Float,
+    captureFrame: CGRect? = nil
   ) {
     guard let hostingView = self.hostingView,
       let segmentationRenderer = self.segmentationRenderer
@@ -113,6 +114,7 @@ class OverlayWindowController: NSWindowController {
     LogManager.shared.info("Updating segmentation with mask shape: \(mask.shape)")
     LogManager.shared.info("Class colors: \(classColors)")
     LogManager.shared.info("Class labels: \(classLabels)")
+    LogManager.shared.info("Confidence threshold: \(threshold)")
     if let frame = captureFrame {
       LogManager.shared.info("Capture frame: \(frame)")
     }
@@ -121,21 +123,12 @@ class OverlayWindowController: NSWindowController {
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
       guard let self = self else { return }
 
-      // Convert colors to RGB space
-      let processedColors = classColors.mapValues { colorString -> String in
-        guard let color = NSColor(named: colorString) ?? NSColor(hexString: colorString),
-          let rgbColor = color.usingColorSpace(.deviceRGB)
-        else {
-          LogManager.shared.error("Failed to convert color: \(colorString)")
-          return "#FF0000"  // Fallback to red
+      // Convert hex colors to RGB
+      let processedColors = classColors.mapValues { hex -> String in
+        if let color = NSColor(hex: hex) {
+          return color.hexString
         }
-
-        let red = Int(rgbColor.redComponent * 255)
-        let green = Int(rgbColor.greenComponent * 255)
-        let blue = Int(rgbColor.blueComponent * 255)
-        let hexColor = String(format: "#%02X%02X%02X", red, green, blue)
-        LogManager.shared.info("Converted \(colorString) to \(hexColor)")
-        return hexColor
+        return hex
       }
 
       // Render mask
@@ -143,7 +136,8 @@ class OverlayWindowController: NSWindowController {
         mask: mask,
         classColors: processedColors,
         classLabels: classLabels,
-        opacity: Float(opacity)
+        opacity: Float(opacity),
+        threshold: threshold
       ) {
         LogManager.shared.info("Successfully rendered segmentation mask")
         DispatchQueue.main.async {

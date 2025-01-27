@@ -39,7 +39,8 @@ class SegmentationRenderer {
     mask: MLMultiArray,
     classColors: [String: String],
     classLabels: [String],
-    opacity: Float
+    opacity: Float,
+    threshold: Float  // Remove default value to ensure we use Settings value
   ) -> CGImage? {
     LogManager.shared.info("=== Starting Segmentation Rendering Pipeline ===")
     
@@ -137,12 +138,14 @@ class SegmentationRenderer {
     var heightMetal: UInt32 = UInt32(height)
     var numClassesMetal: UInt32 = UInt32(numClasses)
     var opacityMetal: Float = opacity
+    var thresholdMetal: Float = threshold
     
     LogManager.shared.info("\nMetal parameters:")
     LogManager.shared.info("- Width: \(widthMetal)")
     LogManager.shared.info("- Height: \(heightMetal)")
     LogManager.shared.info("- Classes: \(numClassesMetal)")
     LogManager.shared.info("- Opacity: \(opacityMetal)")
+    LogManager.shared.info("- Threshold: \(thresholdMetal)")
     
     computeEncoder.setComputePipelineState(pipelineState)
     computeEncoder.setBuffer(maskBuffer, offset: 0, index: 0)
@@ -152,6 +155,7 @@ class SegmentationRenderer {
     computeEncoder.setBytes(&heightMetal, length: MemoryLayout<UInt32>.size, index: 3)
     computeEncoder.setBytes(&numClassesMetal, length: MemoryLayout<UInt32>.size, index: 4)
     computeEncoder.setBytes(&opacityMetal, length: MemoryLayout<Float>.size, index: 5)
+    computeEncoder.setBytes(&thresholdMetal, length: MemoryLayout<Float>.size, index: 6)
     
     // Calculate thread groups based on actual dimensions
     let threadGroupSize = MTLSize(width: 8, height: 8, depth: 1)

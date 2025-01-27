@@ -73,7 +73,7 @@ struct PreferencesView: View {
         }
         .tag(4)
     }
-    .frame(width: 500, height: 600)
+    .frame(width: 800, height: 800)
     .toolbar {
       ToolbarItemGroup(placement: .automatic) {
         CaptureButton(captureManager: captureManager)
