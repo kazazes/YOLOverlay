@@ -20,18 +20,34 @@ kernel void segmentationKernel(
     // Flip Y coordinate
     uint y = height - 1 - gid.y;
     
-    // Find class with maximum probability
-    float maxProb = 0.0;
-    uint maxClass = 0;
+    // Find maximum probability and compute softmax
+    float maxProb = -INFINITY;
+    float sum = 0.0;
+    float probs[32];  // Assuming max 32 classes
     
-    // In NCHW format, for each pixel (h,w), the class probabilities start at:
-    // batch=0, class=c, height=h, width=w
-    // Index = ((0 * numClasses + c) * height + h) * width + w
+    // First pass - find max and compute exponentials
     for (uint c = 0; c < numClasses; c++) {
         uint idx = (c * height + y) * width + gid.x;
         float prob = maskData[idx];
-        if (prob > maxProb) {
-            maxProb = prob;
+        maxProb = max(maxProb, prob);
+        probs[c] = prob;
+    }
+    
+    // Second pass - compute softmax probabilities
+    uint maxClass = 0;
+    float maxSoftmaxProb = 0.0;
+    
+    for (uint c = 0; c < numClasses; c++) {
+        float expVal = exp(probs[c] - maxProb);  // Subtract max for numerical stability
+        sum += expVal;
+        probs[c] = expVal;
+    }
+    
+    // Find class with maximum softmax probability
+    for (uint c = 0; c < numClasses; c++) {
+        float softmaxProb = probs[c] / sum;
+        if (softmaxProb > maxSoftmaxProb) {
+            maxSoftmaxProb = softmaxProb;
             maxClass = c;
         }
     }
@@ -44,7 +60,7 @@ kernel void segmentationKernel(
     );
     
     // Apply threshold and opacity
-    float alpha = maxProb > threshold ? opacity * maxProb : 0.0;
+    float alpha = maxSoftmaxProb > threshold ? opacity : 0.0;
     
     // Write output
     output.write(float4(color, alpha), gid);
