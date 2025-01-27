@@ -3,58 +3,6 @@ import CoreML
 import QuartzCore
 import Vision
 
-// MARK: - Model Error
-enum ModelError: Error {
-  case modelNotFound
-  case modelLoadError(Error)
-  case visionError(Error)
-}
-
-// Helper struct to track objects over time
-private struct YOLOTrackedObject {
-  var label: String
-  var confidence: Float
-  var boundingBox: CGRect
-  var lastSeen: TimeInterval
-  var velocity: CGVector  // For basic motion prediction
-
-  // Smoothing factors
-  static let positionSmoothing: CGFloat = 0.7  // Higher = more smoothing
-  static let confidenceSmoothing: Float = 0.8
-
-  mutating func update(with observation: VNRecognizedObjectObservation, at time: TimeInterval) {
-    // Smooth confidence
-    let newConfidence = observation.labels.first?.confidence ?? 0
-    confidence =
-      confidence * YOLOTrackedObject.confidenceSmoothing + newConfidence
-      * (1 - YOLOTrackedObject.confidenceSmoothing)
-
-    // Calculate velocity
-    let dt = time - lastSeen
-    if dt > 0 {
-      let dx = observation.boundingBox.origin.x - boundingBox.origin.x
-      let dy = observation.boundingBox.origin.y - boundingBox.origin.y
-      velocity = CGVector(dx: dx / dt, dy: dy / dt)
-    }
-
-    // Smooth position with velocity prediction
-    let predictedBox = CGRect(
-      x: boundingBox.origin.x + CGFloat(velocity.dx * dt),
-      y: boundingBox.origin.y + CGFloat(velocity.dy * dt),
-      width: boundingBox.width,
-      height: boundingBox.height
-    )
-
-    // Smooth between prediction and new observation
-    boundingBox = predictedBox.interpolated(
-      to: observation.boundingBox,
-      amount: 1 - YOLOTrackedObject.positionSmoothing
-    )
-
-    lastSeen = time
-  }
-}
-
 class YOLOModelManager {
   private var visionModel: VNCoreMLModel?
   private var detectionRequest: VNCoreMLRequest?
@@ -84,15 +32,57 @@ class YOLOModelManager {
   private func setupModel() {
     Task {
       do {
-        visionModel = try await loadModel()
-        await setupDetectionRequest()
+        // Clear existing request and model
+        detectionRequest = nil
+        visionModel = nil
+        trackedObjects.removeAll()
+        
+        // Load model first
+        let mlModel = try await loadModel()
+        
+        // Create Vision request
+        let model = try VNCoreMLModel(for: mlModel)
+        visionModel = model
+        
+        // Create new request
+        let request = VNCoreMLRequest(model: model) { [weak self] request, error in
+          if let error = error {
+            LogManager.shared.error("Detection request error", error: error)
+            return
+          }
+          
+          guard let self = self else { return }
+          
+          // Check if we still have a valid request
+          if self.detectionRequest === request {
+            LogManager.shared.info("Detection request completed successfully")
+            self.handleResults(request)
+          } else {
+            LogManager.shared.info("Ignoring results from outdated request")
+          }
+        }
+        
+        request.imageCropAndScaleOption = VNImageCropAndScaleOption.scaleFit
+        detectionRequest = request
+        
+        // Log model configuration
+        LogManager.shared.info("Model configuration:")
+        LogManager.shared.info("Input and output features:")
+        for feature in mlModel.modelDescription.inputDescriptionsByName {
+          LogManager.shared.info("- Input: \(feature.key): \(feature.value)")
+        }
+        for feature in mlModel.modelDescription.outputDescriptionsByName {
+          LogManager.shared.info("- Output: \(feature.key): \(feature.value)")
+        }
+        
+        LogManager.shared.info("Successfully initialized model and request")
       } catch {
         LogManager.shared.error("Failed to setup model", error: error)
       }
     }
   }
 
-  private func loadModel() async throws -> VNCoreMLModel {
+  private func loadModel() async throws -> MLModel {
     guard let modelURL = findModel() else {
       LogManager.shared.error("Could not find model in any format")
       throw ModelError.modelNotFound
@@ -150,7 +140,7 @@ class YOLOModelManager {
       }
 
       // For segmentation models, check output shape for number of classes if no labels found
-      if classLabels.isEmpty && Settings.shared.isSegmentationModel {
+      if classLabels.isEmpty {
         if let output = modelDescription.outputDescriptionsByName.values.first(where: {
           $0.name.lowercased().contains("mask") || $0.name.lowercased().contains("seg")
         }),
@@ -189,56 +179,10 @@ class YOLOModelManager {
         isSegmentation: isSegmentation
       )
 
-      do {
-        let model = try VNCoreMLModel(for: mlModel)
-        LogManager.shared.info("Successfully created VNCoreMLModel")
-        return model
-      } catch {
-        LogManager.shared.error("Detection error", error: error)
-        throw ModelError.visionError(error)
-      }
+      return mlModel
     } catch {
       LogManager.shared.error("Failed to load MLModel", error: error)
       throw ModelError.modelLoadError(error)
-    }
-  }
-
-  private func setupDetectionRequest() async {
-    do {
-      let model = try await loadModel()
-      detectionRequest = VNCoreMLRequest(model: model) { [weak self] request, error in
-        if let error = error {
-          LogManager.shared.error("Detection request error", error: error)
-          return
-        }
-        LogManager.shared.info("Detection request completed successfully")
-        self?.handleResults(request)
-      }
-      detectionRequest?.imageCropAndScaleOption = .scaleFit
-      
-      // Log model configuration
-      LogManager.shared.info("Model configuration:")
-      LogManager.shared.info("Input and output features:")
-      let mlModel = try await MLModel.load(contentsOf: findModel()!, configuration: MLModelConfiguration())
-      for feature in mlModel.modelDescription.inputDescriptionsByName {
-        LogManager.shared.info("- Input: \(feature.key): \(feature.value)")
-      }
-      for feature in mlModel.modelDescription.outputDescriptionsByName {
-        LogManager.shared.info("- Output: \(feature.key): \(feature.value)")
-      }
-      
-      LogManager.shared.info("Successfully created VNCoreMLRequest")
-    } catch let error as ModelError {
-      switch error {
-      case .visionError(let err):
-        LogManager.shared.error("Failed to create VNCoreMLModel", error: err)
-      case .modelLoadError(let err):
-        LogManager.shared.error("Failed to load MLModel", error: err)
-      case .modelNotFound:
-        LogManager.shared.error("Model not found")
-      }
-    } catch {
-      LogManager.shared.fault("Unexpected error", error: error)
     }
   }
 
@@ -248,82 +192,70 @@ class YOLOModelManager {
       return
     }
 
-    LogManager.shared.info("Got results of type: \(type(of: results))")
-    LogManager.shared.info("First result type: \(type(of: results.first))")
-    LogManager.shared.info("Number of results: \(results.count)")
+    LogManager.shared.info("Got \(results.count) results of type: \(type(of: results.first))")
 
+    // Clear previous results if model type has changed
     if Settings.shared.isSegmentationModel {
       // Handle segmentation results
-      for (index, observation) in results.enumerated() {
-        LogManager.shared.info("Processing observation \(index) of type: \(type(of: observation))")
-        
+      for observation in results {
         guard let featureValueObs = observation as? VNCoreMLFeatureValueObservation else {
-          LogManager.shared.error("Observation is not a VNCoreMLFeatureValueObservation")
+          LogManager.shared.error("Invalid segmentation result type: \(type(of: observation))")
           continue
         }
         
-        LogManager.shared.info("Found VNCoreMLFeatureValueObservation with name: \(featureValueObs.featureName)")
         let featureValue = featureValueObs.featureValue
-        LogManager.shared.info("Feature value type: \(type(of: featureValue))")
-        
-        guard featureValue.type == .multiArray,
+        guard case .multiArray = featureValue.type,
               let mask = featureValue.multiArrayValue else {
-          LogManager.shared.error("Feature value is not a multiArray")
+          LogManager.shared.error("Invalid feature value type: \(featureValue.type)")
           continue
         }
 
         // Validate mask dimensions
         let shape = mask.shape
-        if shape.count != 4 {
-            LogManager.shared.error("Invalid mask shape: expected 4 dimensions, got \(shape.count)")
-            continue
+        guard shape.count == 4,
+              shape[0].intValue == 1,
+              shape[2].intValue == 160,
+              shape[3].intValue == 160 else {
+          LogManager.shared.error("Invalid mask shape: \(shape)")
+          continue
         }
 
-        // Validate mask dimensions match expected format
-        if shape[0].intValue != 1 || shape[2].intValue != 160 || shape[3].intValue != 160 {
-            LogManager.shared.error("Invalid mask dimensions: expected [1, N, 160, 160], got \(shape)")
-            continue
-        }
-
-        // Create segmentation observation with current frame
+        // Create segmentation observation
         let observation = SegmentationObservation(mask: mask)
         observation.classLabels = Settings.shared.modelClasses
         observation.setValue(CGRect(x: 0, y: 0, width: 1, height: 1), forKey: "boundingBox")
         
-        LogManager.shared.info("Created segmentation observation with mask shape: \(mask.shape)")
-        LogManager.shared.info("Class labels: \(Settings.shared.modelClasses)")
-        LogManager.shared.info("Current frame: \(currentFrame)")
-        LogManager.shared.info("Calling detection handler with segmentation observation")
-        
+        LogManager.shared.info("Created segmentation observation with \(Settings.shared.modelClasses.count) classes")
         detectionHandler?([observation])
-        return // Exit after successfully processing the segmentation mask
+        return
       }
       
-      // If we get here, no valid segmentation mask was found
-      LogManager.shared.error("No segmentation mask found in results")
+      LogManager.shared.error("No valid segmentation mask found in results")
     } else {
       // Handle regular YOLO detection results
       let detections = results.compactMap { $0 as? VNRecognizedObjectObservation }
-      if !detections.isEmpty {
-        // Filter by confidence threshold
-        let filteredDetections = detections.filter { observation in
-          guard let confidence = observation.labels.first?.confidence else { return false }
-          return confidence >= Settings.shared.confidenceThreshold
-        }
+      
+      if detections.isEmpty {
+        LogManager.shared.error("No valid detection results found")
+        return
+      }
 
-        if !filteredDetections.isEmpty {
-          LogManager.shared.info("Found \(filteredDetections.count) detections above threshold")
-          for detection in filteredDetections {
-            if let label = detection.labels.first {
-              LogManager.shared.debug("  - \(label.identifier): \(label.confidence)")
-            }
+      // Filter by confidence threshold
+      let filteredDetections = detections.filter { observation in
+        guard let confidence = observation.labels.first?.confidence else { return false }
+        return confidence >= Settings.shared.confidenceThreshold
+      }
+
+      if !filteredDetections.isEmpty {
+        LogManager.shared.info("Found \(filteredDetections.count) detections above threshold")
+        for detection in filteredDetections {
+          if let label = detection.labels.first {
+            LogManager.shared.debug("  - \(label.identifier): \(label.confidence)")
           }
-          detectionHandler?(filteredDetections)
-        } else {
-          LogManager.shared.debug("No detections above confidence threshold")
         }
+        detectionHandler?(filteredDetections)
       } else {
-        LogManager.shared.error("No valid detection results found in observations")
+        LogManager.shared.debug("No detections above confidence threshold")
       }
     }
   }
@@ -410,47 +342,5 @@ class YOLOModelManager {
 
     let handler = VNImageRequestHandler(cgImage: image, orientation: .up)
     try? handler.perform([request])
-  }
-}
-
-struct DetectedObject: Identifiable, Equatable {
-  let id = UUID()
-  let label: String
-  let confidence: Float
-  let boundingBox: CGRect
-
-  // Implement Equatable
-  static func == (lhs: DetectedObject, rhs: DetectedObject) -> Bool {
-    lhs.label == rhs.label && lhs.confidence == rhs.confidence && lhs.boundingBox == rhs.boundingBox
-  }
-}
-
-// Helper extension to convert between types
-extension VNRecognizedObjectObservation {
-  static func fromDetectedObject(_ object: DetectedObject) -> VNRecognizedObjectObservation {
-    let observation = VNRecognizedObjectObservation(boundingBox: object.boundingBox)
-
-    // Create a classification observation using private API
-    let classification = unsafeBitCast(
-      NSClassFromString("VNClassificationObservation")?.alloc(),
-      to: VNClassificationObservation.self
-    )
-    classification.setValue(object.label, forKey: "identifier")
-    classification.setValue(object.confidence, forKey: "confidence")
-
-    // Set the labels using setValue
-    observation.setValue([classification], forKey: "labels")
-    return observation
-  }
-}
-
-// Helper extension for CGRect interpolation
-extension CGRect {
-  func interpolated(to other: CGRect, amount: CGFloat) -> CGRect {
-    let x = origin.x + (other.origin.x - origin.x) * amount
-    let y = origin.y + (other.origin.y - origin.y) * amount
-    let width = size.width + (other.size.width - size.width) * amount
-    let height = size.height + (other.size.height - size.height) * amount
-    return CGRect(x: x, y: y, width: width, height: height)
   }
 }
