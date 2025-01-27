@@ -55,7 +55,7 @@ struct BoundingBoxView: View {
     default:
       // If not a named color, try as hex
       if colorString.hasPrefix("#") {
-        return Color(hex: colorString) ?? .red
+        return Color(hex: colorString)
       }
       return .red
     }

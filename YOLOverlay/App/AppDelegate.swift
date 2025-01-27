@@ -132,7 +132,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
   @objc private func toggleDetection() {
     Task {
-      let isRecording = await captureManager.isRecording
+      let isRecording = captureManager.isRecording
       if isRecording {
         await captureManager.stopCapture()
       } else {
