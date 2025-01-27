@@ -1,16 +1,83 @@
 import SwiftUI
+import UniformTypeIdentifiers
+
+// Define custom UTType for PyTorch models
+extension UTType {
+  static let pytorchModel = UTType(importedAs: "com.pytorch.model")
+
+  // Fallback types for PyTorch models
+  static let pythonScript = UTType(filenameExtension: "pt")
+  static let pytorch = UTType(filenameExtension: "pth")
+}
 
 struct PreferencesView: View {
   @ObservedObject private var settings = Settings.shared
-  @State private var selectedTab = "Model"
+  @State private var selectedTab = 0
   @ObservedObject private var captureManager = ScreenCaptureManager.shared
 
   var body: some View {
-    NavigationSplitView(columnVisibility: .constant(.all)) {
-      PreferencesSidebar(selectedTab: $selectedTab)
-    } detail: {
-      PreferencesDetail(
-        selectedTab: selectedTab, settings: settings, captureManager: captureManager)
+    TabView(selection: $selectedTab) {
+      ModelSettingsView(settings: settings)
+        .tabItem {
+          Label("Models", systemImage: "cube.box")
+        }
+        .tag(0)
+
+      // Detection Settings
+      VStack(alignment: .leading, spacing: 16) {
+        PerformanceSettingsView(settings: settings)
+      }
+      .padding()
+      .tabItem {
+        Label("Detection", systemImage: "rectangle.dashed")
+      }
+      .tag(1)
+
+      // Appearance Settings
+      AppearanceSettingsView(settings: settings)
+        .padding()
+        .tabItem {
+          Label("Appearance", systemImage: "paintbrush")
+        }
+        .tag(2)
+
+      if settings.isSegmentationModel {
+        // Segmentation Settings
+        VStack(alignment: .leading, spacing: 16) {
+          Text("Segmentation Settings")
+            .font(.headline)
+
+          VStack(alignment: .leading) {
+            Text("Opacity: \(Int(settings.segmentationOpacity * 100))%")
+            Slider(value: $settings.segmentationOpacity, in: 0...1)
+          }
+
+          Picker("Color Mode", selection: $settings.segmentationColorMode) {
+            Text("Class-based").tag("class")
+            Text("Confidence-based").tag("confidence")
+          }
+          .pickerStyle(SegmentedPickerStyle())
+        }
+        .padding()
+        .tabItem {
+          Label("Segmentation", systemImage: "paintbrush.fill")
+        }
+        .tag(3)
+      }
+
+      // Citation
+      CitationView()
+        .padding()
+        .tabItem {
+          Label("About", systemImage: "info.circle")
+        }
+        .tag(4)
+    }
+    .frame(width: 500, height: 600)
+    .toolbar {
+      ToolbarItemGroup(placement: .automatic) {
+        CaptureButton(captureManager: captureManager)
+      }
     }
   }
 }
@@ -98,7 +165,10 @@ private struct DetectedClassesGrid: View {
           .foregroundColor(.secondary)
           .padding()
       } else {
-        ClassGridContent(classes: classes, classColors: settings.classColors)
+        ScrollView {
+          ClassGridContent(classes: classes, classColors: settings.classColors)
+        }
+        .frame(maxHeight: 300)  // Set a max height for scrolling
       }
     }
   }
@@ -110,7 +180,12 @@ private struct ClassGridContent: View {
   let classColors: [String: String]
 
   var body: some View {
-    LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], spacing: 8) {
+    LazyVGrid(
+      columns: [
+        GridItem(.adaptive(minimum: 120, maximum: 150), spacing: 8)
+      ],
+      spacing: 8
+    ) {
       ForEach(classes, id: \.self) { className in
         ClassGridItem(className: className, colorHex: classColors[className] ?? "#FF0000")
       }
@@ -127,28 +202,105 @@ private struct ClassGridItem: View {
   var body: some View {
     HStack(spacing: 4) {
       Circle()
-        .fill(Color(hex: colorHex))
+        .fill(getColorFromString(colorHex))
         .frame(width: 8, height: 8)
       Text(className)
         .font(.system(size: 12))
+        .lineLimit(1)
     }
     .padding(.vertical, 4)
     .padding(.horizontal, 8)
+    .frame(maxWidth: .infinity, alignment: .leading)
     .background(Color(.controlBackgroundColor))
     .cornerRadius(4)
+  }
+  
+  private func getColorFromString(_ colorString: String) -> Color {
+    // First try as a named color
+    switch colorString.lowercased() {
+    case "red": return .red
+    case "blue": return .blue
+    case "green": return .green
+    case "yellow": return .yellow
+    case "orange": return .orange
+    case "purple": return .purple
+    case "pink": return .pink
+    case "teal": return .teal
+    case "indigo": return .indigo
+    case "mint": return .mint
+    case "brown": return .brown
+    case "cyan": return .cyan
+    default:
+      // If not a named color, try as hex
+      if colorString.hasPrefix("#") {
+        return Color(hex: colorString) ?? .red
+      }
+      return .red
+    }
   }
 }
 
 // MARK: - Model Settings View
 struct ModelSettingsView: View {
   @ObservedObject var settings: Settings
+  @State private var isShowingFilePicker = false
+  @State private var isUploading = false
+  @State private var uploadError: String?
+  @State private var showingDeleteAlert = false
+  @State private var modelToDelete: String?
 
   var body: some View {
     Form {
       GroupBox("Model Selection") {
-        Picker("Model", selection: $settings.modelName) {
-          ForEach(settings.availableModels, id: \.self) { model in
-            Text(model).tag(model)
+        VStack(alignment: .leading, spacing: 12) {
+          // Model List
+          List(settings.availableModels, id: \.self, selection: $settings.modelName) { model in
+            HStack {
+              // Model name and type
+              VStack(alignment: .leading) {
+                Text(model)
+                  .fontWeight(settings.modelName == model ? .bold : .regular)
+                Text(settings.isCustomModel(model) ? "Custom Model" : "Built-in Model")
+                  .font(.caption)
+                  .foregroundColor(.secondary)
+              }
+
+              Spacer()
+
+              // Delete button for custom models
+              if settings.isCustomModel(model) {
+                Button(action: {
+                  modelToDelete = model
+                  showingDeleteAlert = true
+                }) {
+                  Image(systemName: "trash")
+                    .foregroundColor(.red)
+                }
+                .buttonStyle(BorderlessButtonStyle())
+              }
+            }
+            .padding(.vertical, 4)
+          }
+          .frame(height: 200)
+          .background(Color(.textBackgroundColor))
+          .cornerRadius(8)
+
+          Divider()
+
+          // Add Custom Model Button
+          Button(action: { isShowingFilePicker = true }) {
+            Label("Import Custom Model", systemImage: "square.and.arrow.down")
+          }
+          .disabled(isUploading)
+
+          if isUploading {
+            ProgressView("Converting model...")
+          }
+
+          if let error = uploadError {
+            Text(error)
+              .foregroundColor(.red)
+              .font(.caption)
           }
         }
       }
@@ -172,6 +324,93 @@ struct ModelSettingsView: View {
       }
     }
     .padding()
+    .fileImporter(
+      isPresented: $isShowingFilePicker,
+      allowedContentTypes: [
+        .pytorchModel,
+        .pythonScript ?? .data,
+        .pytorch ?? .data,
+      ].compactMap { $0 },
+      allowsMultipleSelection: false
+    ) { result in
+      Task {
+        await handleModelSelection(result)
+      }
+    }
+    .alert("Delete Model", isPresented: $showingDeleteAlert) {
+      Button("Cancel", role: .cancel) {}
+      Button("Delete", role: .destructive) {
+        if let model = modelToDelete {
+          do {
+            try settings.removeCustomModel(model)
+          } catch {
+            uploadError = "Failed to delete model: \(error.localizedDescription)"
+          }
+        }
+      }
+    } message: {
+      if let model = modelToDelete {
+        Text("Are you sure you want to delete '\(model)'? This action cannot be undone.")
+      }
+    }
+  }
+
+  private func handleModelSelection(_ result: Result<[URL], Error>) async {
+    do {
+      let urls = try result.get()
+      guard let selectedFile = urls.first else { return }
+
+      // Verify file extension
+      guard
+        selectedFile.pathExtension.lowercased() == "pt"
+          || selectedFile.pathExtension.lowercased() == "pth"
+      else {
+        await MainActor.run {
+          uploadError = "Invalid file type. Please select a .pt or .pth file."
+        }
+        return
+      }
+
+      await MainActor.run {
+        isUploading = true
+        uploadError = nil
+      }
+
+      // Start file access coordination
+      guard selectedFile.startAccessingSecurityScopedResource() else {
+        throw NSError(
+          domain: "ModelService", code: -1,
+          userInfo: [
+            NSLocalizedDescriptionKey: "Permission denied: Cannot access the selected file"
+          ])
+      }
+
+      defer {
+        selectedFile.stopAccessingSecurityScopedResource()
+      }
+
+      // Upload model
+      let modelService = ModelService.shared
+      let downloadURL = try await modelService.uploadModel(fileURL: selectedFile)
+
+      // Add model to available models and select it
+      try await settings.addCustomModel(name: selectedFile.lastPathComponent, url: downloadURL)
+
+      await MainActor.run {
+        settings.modelName = selectedFile.lastPathComponent.replacingOccurrences(
+          of: ".pt", with: ""
+        ).replacingOccurrences(of: ".pth", with: "")
+      }
+
+    } catch {
+      await MainActor.run {
+        uploadError = "Failed to process model: \(error.localizedDescription)"
+      }
+    }
+
+    await MainActor.run {
+      isUploading = false
+    }
   }
 }
 

@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+import CoreML
 import ScreenCaptureKit
 import SwiftUI
 import VideoToolbox
@@ -8,6 +9,12 @@ import Vision
 @MainActor
 class ScreenCaptureManager: NSObject, ObservableObject {
   static let shared = ScreenCaptureManager()
+
+  // Shared CIContext for hardware-accelerated image processing
+  private static let ciContext = CIContext(options: [
+    .useSoftwareRenderer: false,
+    .workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
+  ])
 
   private var filter: SCContentFilter?
   private var stream: SCStream?
@@ -133,7 +140,7 @@ class ScreenCaptureManager: NSObject, ObservableObject {
 
       // Add stream output
       if let streamOutput = streamOutput {
-        try await stream?.addStreamOutput(
+        try stream?.addStreamOutput(
           streamOutput, type: .screen, sampleHandlerQueue: streamQueue)
       }
       try await stream?.startCapture()
@@ -174,7 +181,7 @@ class ScreenCaptureManager: NSObject, ObservableObject {
       if let stream = stream, let streamOutput = streamOutput {
         try await stream.stopCapture()
         // Remove stream output before nulling references
-        try await stream.removeStreamOutput(streamOutput, type: .screen)
+        try stream.removeStreamOutput(streamOutput, type: .screen)
         self.stream = nil
         self.streamOutput = nil
       }
@@ -216,47 +223,88 @@ class ScreenCaptureManager: NSObject, ObservableObject {
   private func processFrame(_ frame: CMSampleBuffer) {
     // Skip if we're still processing the previous frame
     guard !isProcessingFrame else {
-      statsManager.incrementDroppedFrames()  // Record as dropped frame
-      handleDroppedFrame()
+      statsManager.incrementDroppedFrames()
       return
     }
 
     guard let imageBuffer = frame.imageBuffer else { return }
-
     isProcessingFrame = true
 
-    // Create CGImage from buffer
-    var cgImage: CGImage?
-    VTCreateCGImageFromCVPixelBuffer(imageBuffer, options: nil, imageOut: &cgImage)
+    // Use CIContext for hardware-accelerated image conversion
+    let ciImage = CIImage(cvImageBuffer: imageBuffer)
+    let context = ScreenCaptureManager.ciContext  // Use shared context for better performance
 
-    if let cgImage = cgImage {
-      // Perform YOLO detection
-      yoloManager.detect(in: cgImage)
+    guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
+      isProcessingFrame = false
+      return
+    }
+
+    // Perform detection/segmentation
+    yoloManager.detect(in: cgImage)
+  }
+
+  private func handleDetections(_ observations: [VNRecognizedObjectObservation]) {
+    defer { isProcessingFrame = false }  // Reset processing flag when done
+
+    // Update stats
+    statsManager.incrementProcessedFrames()
+
+    // Update each overlay window on main thread
+    Task { @MainActor in
+      for window in overlayWindows {
+        if let segObs = observations.first as? SegmentationObservation {
+          // Handle segmentation
+          if let mask = segObs.segmentationMask,
+            let labels = segObs.classLabels
+          {
+            // Get the current screen frame
+            guard let screenFrame = window.window?.screen?.frame else {
+              LogManager.shared.error("Could not get screen frame for window")
+              continue
+            }
+
+            LogManager.shared.info("Updating segmentation with screen frame: \(screenFrame)")
+            window.updateSegmentation(
+              mask: mask,
+              classColors: Settings.shared.classColors,
+              classLabels: labels,
+              opacity: Settings.shared.segmentationOpacity,
+              captureFrame: screenFrame  // Pass the screen frame
+            )
+          }
+        } else {
+          // Handle regular detections
+          window.updateDetections(observations)
+        }
+      }
     }
   }
 
-  private func handleDetections(_ results: [VNRecognizedObjectObservation]) {
-    defer { isProcessingFrame = false }  // Reset processing flag when done
-
-    // Convert Vision observations to our DetectedObject type
-    let detectedObjects = results.compactMap { observation -> DetectedObject? in
-      guard let label = observation.labels.first else { return nil }
-      return DetectedObject(
-        label: label.identifier,
-        confidence: label.confidence,
-        boundingBox: observation.boundingBox
-      )
-    }
-
-    // Update overlay windows on main thread
-    Task { @MainActor in
-      self.overlayWindows.forEach { controller in
-        controller.updateDetections(detectedObjects)
+  private func handleSegmentationResults(_ results: [VNRecognizedObjectObservation]) {
+    // For segmentation models, try to get the segmentation mask
+    if Settings.shared.isSegmentationModel {
+      guard let observation = results.first as? SegmentationObservation,
+        let mask = observation.segmentationMask,
+        let classes = observation.classLabels
+      else {
+        LogManager.shared.error("Failed to get segmentation mask from results")
+        return
       }
-    }
 
-    // Update stats
-    statsManager.updateDetections(detectedObjects)
+      LogManager.shared.info(
+        "Got segmentation mask with shape: \(mask.shape) and classes: \(classes)")
+
+      // Update overlay windows with segmentation data
+      for window in overlayWindows {
+        window.updateSegmentation(
+          mask: mask,
+          classColors: Settings.shared.classColors,
+          classLabels: classes,
+          opacity: Settings.shared.segmentationOpacity
+        )
+      }
+      return
+    }
   }
 
   private func handleDroppedFrame() {

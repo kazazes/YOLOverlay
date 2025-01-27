@@ -1,5 +1,7 @@
 import AppKit
+import CoreML
 import SwiftUI
+import Vision
 
 class OverlayWindow: NSWindow {
   init(screen: NSScreen) {
@@ -11,157 +13,79 @@ class OverlayWindow: NSWindow {
     self.hasShadow = false
     self.ignoresMouseEvents = true
     self.collectionBehavior = [.canJoinAllSpaces, .stationary]
+
+    // Set window frame to match screen
+    self.setFrame(screen.frame, display: true)
   }
 }
 
+// Simple data structure to hold overlay state
+struct OverlayState {
+  var detections: [VNRecognizedObjectObservation] = []
+  var segmentationImage: CGImage?
+  var segmentationOpacity: Double = 1.0
+  var captureFrame: CGRect = .zero  // Add capture frame information
+}
+
 struct OverlayView: View {
-  let detectedObjects: [DetectedObject]
-  let screenFrame: CGRect
-  @ObservedObject private var settings = Settings.shared
-  @ObservedObject private var tracker: ObjectTracker
-
-  init(detectedObjects: [DetectedObject], screenFrame: CGRect, tracker: ObjectTracker) {
-    self.detectedObjects = detectedObjects
-    self.screenFrame = screenFrame
-    self.tracker = tracker
-  }
-
-  private func getColor(_ name: String) -> Color {
-    // If the string starts with #, treat it as a hex color
-    if name.starts(with: "#") {
-      return Color(hex: name)
-    }
-
-    // Otherwise, treat it as a named color
-    switch name.lowercased() {
-    case "red": return .red
-    case "blue": return .blue
-    case "green": return .green
-    case "yellow": return .yellow
-    case "orange": return .orange
-    case "purple": return .purple
-    case "pink": return .pink
-    case "teal": return .teal
-    case "indigo": return .indigo
-    case "mint": return .mint
-    case "brown": return .brown
-    case "cyan": return .cyan
-    default: return .red
-    }
-  }
+  let state: OverlayState
 
   var body: some View {
-    ZStack {
-      // Transparent background
-      Color.clear
-
-      // Draw bounding boxes
-      ForEach(tracker.trackedObjects) { object in
-        let rect = calculateScreenRect(object.rect)
-        let color = getColor(settings.getColorForClass(object.label))
-          .opacity(object.alpha * settings.boundingBoxOpacity)
-
-        ZStack {
-          // Bounding box
-          Rectangle()
-            .stroke(color, lineWidth: 2)
-            .frame(width: rect.width, height: rect.height)
-            .position(x: rect.midX, y: rect.midY)
-
-          // Label (if enabled)
-          if settings.showLabels {
-            // Find best label position that doesn't overlap with other boxes
-            let labelPosition = findBestLabelPosition(
-              for: rect, avoiding: tracker.trackedObjects.map { calculateScreenRect($0.rect) })
-
-            Text("\(object.label) (\(Int(object.confidence * 100))%)")
-              .font(.system(size: 12, weight: .bold))
-              .foregroundColor(.white)
-              .padding(4)
-              .background(color)
-              .cornerRadius(4)
-              .position(x: labelPosition.x, y: labelPosition.y)
-          }
+    GeometryReader { geometry in
+      ZStack(alignment: .topLeading) {
+        // Segmentation layer
+        if let segImage = state.segmentationImage {
+          Image(nsImage: NSImage(cgImage: segImage, size: NSSize(width: segImage.width, height: segImage.height)))
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .frame(
+              width: state.captureFrame.width,
+              height: state.captureFrame.height
+            )
+            .position(
+              x: state.captureFrame.midX,
+              y: state.captureFrame.midY
+            )
+            .opacity(state.segmentationOpacity)
+            .animation(.easeInOut(duration: 0.2), value: state.segmentationOpacity)
         }
+
+        // Detection boxes layer
+        BoundingBoxView(
+          detectedObjects: state.detections.compactMap { observation in
+            guard let label = observation.labels.first else { return nil }
+            return DetectedObject(
+              label: label.identifier,
+              confidence: label.confidence,
+              boundingBox: observation.boundingBox
+            )
+          },
+          frameSize: geometry.size
+        )
       }
     }
-    .onAppear {
-      tracker.update(with: detectedObjects)
-    }
-    .onChange(of: detectedObjects) { _, newDetections in
-      tracker.update(with: newDetections)
-    }
-    .frame(width: screenFrame.width, height: screenFrame.height)
-  }
-
-  private func calculateScreenRect(_ normalizedRect: CGRect) -> CGRect {
-    let x = normalizedRect.origin.x * screenFrame.width
-    let y = (1 - normalizedRect.origin.y - normalizedRect.height) * screenFrame.height
-    let width = normalizedRect.width * screenFrame.width
-    let height = normalizedRect.height * screenFrame.height
-    return CGRect(x: x, y: y, width: width, height: height)
-  }
-
-  private func findBestLabelPosition(for rect: CGRect, avoiding otherRects: [CGRect]) -> CGPoint {
-    // Possible positions to try (in order of preference)
-    let positions: [(CGFloat, CGFloat)] = [
-      (rect.midX, rect.minY - 10),  // Above center
-      (rect.midX, rect.maxY + 10),  // Below center
-      (rect.minX - 10, rect.midY),  // Left center
-      (rect.maxX + 10, rect.midY),  // Right center
-      (rect.minX, rect.minY - 10),  // Above left
-      (rect.maxX, rect.minY - 10),  // Above right
-      (rect.minX, rect.maxY + 10),  // Below left
-      (rect.maxX, rect.maxY + 10),  // Below right
-    ]
-
-    // Approximate label size
-    let labelSize = CGSize(width: 100, height: 20)
-
-    // Try each position until we find one that doesn't overlap
-    for (x, y) in positions {
-      let labelRect = CGRect(
-        x: x - labelSize.width / 2,
-        y: y - labelSize.height / 2,
-        width: labelSize.width,
-        height: labelSize.height
-      )
-
-      // Check if this position overlaps with any other bounding boxes
-      let hasOverlap = otherRects.contains { otherRect in
-        labelRect.intersects(otherRect)
-      }
-
-      if !hasOverlap {
-        return CGPoint(x: x, y: y)
-      }
-    }
-
-    // If all positions overlap, return the default position (above center)
-    return CGPoint(x: rect.midX, y: rect.minY - 10)
   }
 }
 
 class OverlayWindowController: NSWindowController {
   private var hostingView: NSHostingView<OverlayView>?
-  private let tracker = ObjectTracker()
+  private var segmentationRenderer: SegmentationRenderer?
+  private var state = OverlayState()
 
   init(screen: NSScreen) {
-    let window = OverlayWindow(screen: screen)
-    super.init(window: window)
+    self.segmentationRenderer = SegmentationRenderer()
+    super.init(window: nil)
 
-    // Create initial hosting view with empty detections
-    let hostingView = NSHostingView(
-      rootView: OverlayView(
-        detectedObjects: [],
-        screenFrame: screen.frame,
-        tracker: tracker
-      )
-    )
+    let window = OverlayWindow(screen: screen)
+    self.window = window
+    
+    // Set initial capture frame
+    state.captureFrame = screen.frame
+    
+    let hostingView = NSHostingView(rootView: OverlayView(state: state))
     window.contentView = hostingView
     self.hostingView = hostingView
 
-    // Show the window immediately
     window.orderFront(nil)
   }
 
@@ -169,18 +93,100 @@ class OverlayWindowController: NSWindowController {
     fatalError("init(coder:) has not been implemented")
   }
 
-  func updateDetections(_ detections: [DetectedObject]) {
-    guard
-      let window = window,
-      let screen = window.screen,
-      let hostingView = self.hostingView
+  func updateDetections(_ detections: [VNRecognizedObjectObservation]) {
+    guard let hostingView = self.hostingView else { return }
+    state.detections = detections
+    hostingView.rootView = OverlayView(state: state)
+  }
+
+  func updateSegmentation(
+    mask: MLMultiArray, 
+    classColors: [String: String], 
+    classLabels: [String], 
+    opacity: Double,
+    captureFrame: CGRect? = nil  // Add optional capture frame parameter
+  ) {
+    guard let hostingView = self.hostingView,
+      let segmentationRenderer = self.segmentationRenderer
     else { return }
 
-    // Update the root view instead of creating a new hosting view
-    hostingView.rootView = OverlayView(
-      detectedObjects: detections,
-      screenFrame: screen.frame,
-      tracker: tracker
+    LogManager.shared.info("Updating segmentation with mask shape: \(mask.shape)")
+    LogManager.shared.info("Class colors: \(classColors)")
+    LogManager.shared.info("Class labels: \(classLabels)")
+    if let frame = captureFrame {
+      LogManager.shared.info("Capture frame: \(frame)")
+    }
+
+    // Process segmentation on background queue
+    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+      guard let self = self else { return }
+
+      // Convert colors to RGB space
+      let processedColors = classColors.mapValues { colorString -> String in
+        guard let color = NSColor(named: colorString) ?? NSColor(hexString: colorString),
+          let rgbColor = color.usingColorSpace(.deviceRGB)
+        else {
+          LogManager.shared.error("Failed to convert color: \(colorString)")
+          return "#FF0000"  // Fallback to red
+        }
+
+        let red = Int(rgbColor.redComponent * 255)
+        let green = Int(rgbColor.greenComponent * 255)
+        let blue = Int(rgbColor.blueComponent * 255)
+        let hexColor = String(format: "#%02X%02X%02X", red, green, blue)
+        LogManager.shared.info("Converted \(colorString) to \(hexColor)")
+        return hexColor
+      }
+
+      // Render mask
+      if let renderedMask = segmentationRenderer.renderMask(
+        mask: mask,
+        classColors: processedColors,
+        classLabels: classLabels,
+        opacity: Float(opacity)
+      ) {
+        LogManager.shared.info("Successfully rendered segmentation mask")
+        DispatchQueue.main.async {
+          self.state.segmentationImage = renderedMask
+          self.state.segmentationOpacity = opacity
+          if let frame = captureFrame {
+            self.state.captureFrame = frame
+          }
+          hostingView.rootView = OverlayView(state: self.state)
+          LogManager.shared.info("Updated overlay view with new segmentation")
+        }
+      } else {
+        LogManager.shared.error("Failed to render segmentation mask")
+      }
+    }
+  }
+}
+
+// Helper extension for color parsing
+extension NSColor {
+  convenience init?(hexString: String) {
+    let hex = hexString.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+    var int: UInt64 = 0
+    Scanner(string: hex).scanHexInt64(&int)
+    let a: UInt64
+    let r: UInt64
+    let g: UInt64
+    let b: UInt64
+    switch hex.count {
+    case 3:  // RGB (12-bit)
+      (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+    case 6:  // RGB (24-bit)
+      (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+    case 8:  // ARGB (32-bit)
+      (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+    default:
+      return nil
+    }
+    self.init(
+      deviceRed: CGFloat(r) / 255,
+      green: CGFloat(g) / 255,
+      blue: CGFloat(b) / 255,
+      alpha: CGFloat(a) / 255
     )
   }
 }

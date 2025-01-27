@@ -28,6 +28,10 @@
 		0F3EE8412D414C5600A1CBC2 /* LogWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8282D414C5500A1CBC2 /* LogWindow.swift */; };
 		0F3EE8422D414C5600A1CBC2 /* YOLOModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8322D414C5500A1CBC2 /* YOLOModelManager.swift */; };
 		0F3EE8432D414C5600A1CBC2 /* LogWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8292D414C5500A1CBC2 /* LogWindowController.swift */; };
+		0F9104A42D47A10E00F91045 /* ModelService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F9104A32D47A10E00F91045 /* ModelService.swift */; };
+		0F9104A82D47AF1900F91045 /* SegmentationRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F9104A62D47AF1900F91045 /* SegmentationRenderer.swift */; };
+		0F9104A92D47AF1900F91045 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 0F9104A72D47AF1900F91045 /* Shaders.metal */; };
+		0F9104AC2D47D70800F91045 /* SegmentationObservation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F9104AB2D47D70800F91045 /* SegmentationObservation.swift */; };
 		0F983B722D44E3630002119C /* Color+hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F983B712D44E3630002119C /* Color+hex.swift */; };
 /* End PBXBuildFile section */
 
@@ -74,6 +78,10 @@
 		0F3EE8302D414C5500A1CBC2 /* YOLOverlay.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YOLOverlay.entitlements; sourceTree = "<group>"; };
 		0F3EE8312D414C5500A1CBC2 /* Yolo_MarkerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Yolo_MarkerApp.swift; sourceTree = "<group>"; };
 		0F3EE8322D414C5500A1CBC2 /* YOLOModelManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YOLOModelManager.swift; sourceTree = "<group>"; };
+		0F9104A32D47A10E00F91045 /* ModelService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelService.swift; sourceTree = "<group>"; };
+		0F9104A62D47AF1900F91045 /* SegmentationRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationRenderer.swift; sourceTree = "<group>"; };
+		0F9104A72D47AF1900F91045 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
+		0F9104AB2D47D70800F91045 /* SegmentationObservation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationObservation.swift; sourceTree = "<group>"; };
 		0F983B712D44E3630002119C /* Color+hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+hex.swift"; sourceTree = "<group>"; };
 		0F983B732D44E6CB0002119C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -160,6 +168,10 @@
 		0F3EE8332D414C5500A1CBC2 /* YOLOverlay */ = {
 			isa = PBXGroup;
 			children = (
+				0F9104AB2D47D70800F91045 /* SegmentationObservation.swift */,
+				0F9104A62D47AF1900F91045 /* SegmentationRenderer.swift */,
+				0F9104A72D47AF1900F91045 /* Shaders.metal */,
+				0F9104A32D47A10E00F91045 /* ModelService.swift */,
 				0F983B732D44E6CB0002119C /* Info.plist */,
 				0F3EE8222D414C5500A1CBC2 /* Preview Content */,
 				0F3EE8232D414C5500A1CBC2 /* AppDelegate.swift */,
@@ -330,11 +342,15 @@
 			files = (
 				0F3EE7B72D40F90900A1CBC2 /* yolo11s.mlpackage in Sources */,
 				0F3EE7B82D40F90900A1CBC2 /* yolov8x.mlpackage in Sources */,
+				0F9104AC2D47D70800F91045 /* SegmentationObservation.swift in Sources */,
 				0F3EE7B92D40F90900A1CBC2 /* yolov8l.mlpackage in Sources */,
 				0F3EE8362D414C5600A1CBC2 /* AppDelegate.swift in Sources */,
 				0F3EE8372D414C5600A1CBC2 /* LogManager.swift in Sources */,
 				0F3EE8382D414C5600A1CBC2 /* Yolo_MarkerApp.swift in Sources */,
+				0F9104A82D47AF1900F91045 /* SegmentationRenderer.swift in Sources */,
+				0F9104A92D47AF1900F91045 /* Shaders.metal in Sources */,
 				0F3EE8392D414C5600A1CBC2 /* ScreenCaptureManager.swift in Sources */,
+				0F9104A42D47A10E00F91045 /* ModelService.swift in Sources */,
 				0F3EE83A2D414C5600A1CBC2 /* BoundingBoxView.swift in Sources */,
 				0F3EE83B2D414C5600A1CBC2 /* ObjectTracker.swift in Sources */,
 				0F983B722D44E3630002119C /* Color+hex.swift in Sources */,

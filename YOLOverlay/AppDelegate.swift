@@ -151,6 +151,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       )
       window.title = "Preferences"
       window.center()
+      window.toolbarStyle = .unified
+      window.titlebarSeparatorStyle = .none
 
       let hostingView = NSHostingView(rootView: PreferencesView())
       window.contentView = hostingView

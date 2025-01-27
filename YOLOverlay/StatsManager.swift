@@ -177,4 +177,8 @@ class StatsManager: ObservableObject {
   func incrementDroppedFrames() {
     droppedFrames += 1
   }
+
+  func incrementProcessedFrames() {
+    recordFrame()
+  }
 }

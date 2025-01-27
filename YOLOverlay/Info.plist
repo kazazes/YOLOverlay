@@ -1,5 +1,58 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict/>
+<dict>
+    <key>UTImportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+                <string>public.content</string>
+            </array>
+            <key>UTTypeDescription</key>
+            <string>PyTorch Model</string>
+            <key>UTTypeIdentifier</key>
+            <string>com.pytorch.model</string>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>pt</string>
+                    <string>pth</string>
+                </array>
+                <key>public.mime-type</key>
+                <array>
+                    <string>application/x-pytorch-model</string>
+                </array>
+            </dict>
+        </dict>
+    </array>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+                <string>public.content</string>
+            </array>
+            <key>UTTypeDescription</key>
+            <string>PyTorch Model</string>
+            <key>UTTypeIdentifier</key>
+            <string>com.pytorch.model</string>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>pt</string>
+                    <string>pth</string>
+                </array>
+                <key>public.mime-type</key>
+                <array>
+                    <string>application/x-pytorch-model</string>
+                </array>
+            </dict>
+        </dict>
+    </array>
+</dict>
 </plist>
