@@ -12,7 +12,6 @@
 		0F3EE7B92D40F90900A1CBC2 /* yolov8l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7B22D40F90900A1CBC2 /* yolov8l.mlpackage */; };
 		0F3EE7BA2D40F90900A1CBC2 /* yolo11l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7AE2D40F90900A1CBC2 /* yolo11l.mlpackage */; };
 		0F3EE7F82D41407400A1CBC2 /* yolo11x.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE7F72D41407400A1CBC2 /* yolo11x.mlpackage */; };
-		0F3EE8342D414C5500A1CBC2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0F3EE8242D414C5500A1CBC2 /* Assets.xcassets */; };
 		0F3EE8352D414C5500A1CBC2 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0F3EE8212D414C5500A1CBC2 /* Preview Assets.xcassets */; };
 		0F3EE8362D414C5600A1CBC2 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8232D414C5500A1CBC2 /* AppDelegate.swift */; };
 		0F3EE8372D414C5600A1CBC2 /* LogManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8272D414C5500A1CBC2 /* LogManager.swift */; };
@@ -28,7 +27,12 @@
 		0F3EE8412D414C5600A1CBC2 /* LogWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8282D414C5500A1CBC2 /* LogWindow.swift */; };
 		0F3EE8422D414C5600A1CBC2 /* YOLOModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8322D414C5500A1CBC2 /* YOLOModelManager.swift */; };
 		0F3EE8432D414C5600A1CBC2 /* LogWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3EE8292D414C5500A1CBC2 /* LogWindowController.swift */; };
+		0F981FF02D4511E10002119C /* PythonManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F981FEF2D4511E10002119C /* PythonManager.swift */; };
 		0F983B722D44E3630002119C /* Color+hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F983B712D44E3630002119C /* Color+hex.swift */; };
+		0F983B7E2D4504410002119C /* PythonKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0F983B7D2D4504410002119C /* PythonKit */; };
+		0F9841852D4504A60002119C /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0F9841842D4504A60002119C /* SystemConfiguration.framework */; };
+		0F984D8D2D4506BD0002119C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0F3EE8242D414C5500A1CBC2 /* Assets.xcassets */; };
+		0F9877122D4515620002119C /* python-scripts in Resources */ = {isa = PBXBuildFile; fileRef = 0F9877112D45155D0002119C /* python-scripts */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,9 +78,23 @@
 		0F3EE8302D414C5500A1CBC2 /* YOLOverlay.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YOLOverlay.entitlements; sourceTree = "<group>"; };
 		0F3EE8312D414C5500A1CBC2 /* Yolo_MarkerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Yolo_MarkerApp.swift; sourceTree = "<group>"; };
 		0F3EE8322D414C5500A1CBC2 /* YOLOModelManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YOLOModelManager.swift; sourceTree = "<group>"; };
+		0F981FEF2D4511E10002119C /* PythonManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PythonManager.swift; sourceTree = "<group>"; };
 		0F983B712D44E3630002119C /* Color+hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+hex.swift"; sourceTree = "<group>"; };
 		0F983B732D44E6CB0002119C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		0F9841842D4504A60002119C /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		0F9877112D45155D0002119C /* python-scripts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "python-scripts"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		0F9827D22D452EDA0002119C /* Exceptions for "python-macos" folder in "YOLOverlay" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"python-stdlib",
+				Python.xcframework,
+			);
+			target = 0F3EE7622D40E13F00A1CBC2 /* YOLOverlay */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		0F3EE7772D40E14000A1CBC2 /* YOLOverlayTests */ = {
@@ -89,6 +107,17 @@
 			path = YOLOverlayUITests;
 			sourceTree = "<group>";
 		};
+		0F9827CD2D452ECA0002119C /* python-macos */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				0F9827D22D452EDA0002119C /* Exceptions for "python-macos" folder in "YOLOverlay" target */,
+			);
+			explicitFolders = (
+				"python-stdlib",
+			);
+			path = "python-macos";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,6 +125,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0F983B7E2D4504410002119C /* PythonKit in Frameworks */,
+				0F9841852D4504A60002119C /* SystemConfiguration.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -121,9 +152,11 @@
 			children = (
 				0F3EE8332D414C5500A1CBC2 /* YOLOverlay */,
 				0F3EE7B62D40F90900A1CBC2 /* ultralytics */,
+				0F9827CD2D452ECA0002119C /* python-macos */,
 				0F3EE7772D40E14000A1CBC2 /* YOLOverlayTests */,
 				0F3EE7812D40E14000A1CBC2 /* YOLOverlayUITests */,
 				0F3EE7642D40E13F00A1CBC2 /* Products */,
+				0F9841832D4504A60002119C /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -160,6 +193,7 @@
 		0F3EE8332D414C5500A1CBC2 /* YOLOverlay */ = {
 			isa = PBXGroup;
 			children = (
+				0F9877112D45155D0002119C /* python-scripts */,
 				0F983B732D44E6CB0002119C /* Info.plist */,
 				0F3EE8222D414C5500A1CBC2 /* Preview Content */,
 				0F3EE8232D414C5500A1CBC2 /* AppDelegate.swift */,
@@ -172,6 +206,7 @@
 				0F3EE82A2D414C5500A1CBC2 /* ObjectTracker.swift */,
 				0F3EE82B2D414C5500A1CBC2 /* OverlayWindow.swift */,
 				0F3EE82C2D414C5500A1CBC2 /* PreferencesView.swift */,
+				0F981FEF2D4511E10002119C /* PythonManager.swift */,
 				0F3EE82D2D414C5500A1CBC2 /* ScreenCaptureManager.swift */,
 				0F3EE82E2D414C5500A1CBC2 /* Settings.swift */,
 				0F3EE82F2D414C5500A1CBC2 /* StatsManager.swift */,
@@ -181,6 +216,14 @@
 				0F983B712D44E3630002119C /* Color+hex.swift */,
 			);
 			path = YOLOverlay;
+			sourceTree = "<group>";
+		};
+		0F9841832D4504A60002119C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				0F9841842D4504A60002119C /* SystemConfiguration.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -193,6 +236,7 @@
 				0F3EE75F2D40E13F00A1CBC2 /* Sources */,
 				0F3EE7602D40E13F00A1CBC2 /* Frameworks */,
 				0F3EE7612D40E13F00A1CBC2 /* Resources */,
+				0F9850AA2D4507F00002119C /* Sign Python */,
 			);
 			buildRules = (
 			);
@@ -200,6 +244,7 @@
 			);
 			name = YOLOverlay;
 			packageProductDependencies = (
+				0F983B7D2D4504410002119C /* PythonKit */,
 			);
 			productName = "Yolo Marker";
 			productReference = 0F3EE7632D40E13F00A1CBC2 /* YOLOverlay.app */;
@@ -284,6 +329,7 @@
 			mainGroup = 0F3EE75A2D40E13F00A1CBC2;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				0F983B7C2D4504410002119C /* XCRemoteSwiftPackageReference "PythonKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0F3EE7642D40E13F00A1CBC2 /* Products */;
@@ -302,7 +348,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0F3EE8342D414C5500A1CBC2 /* Assets.xcassets in Resources */,
+				0F9877122D4515620002119C /* python-scripts in Resources */,
+				0F984D8D2D4506BD0002119C /* Assets.xcassets in Resources */,
 				0F3EE8352D414C5500A1CBC2 /* Preview Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -323,6 +370,29 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		0F9850AA2D4507F00002119C /* Sign Python */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/python-macos",
+			);
+			name = "Sign Python";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\necho \"Signing contents of $CODESIGNING_FOLDER_PATH/Contents/Resources/python-stdlib/lib-dynload as $EXPANDED_CODE_SIGN_IDENTITY_NAME ($EXPANDED_CODE_SIGN_IDENTITY)\"\ncd \"$CODESIGNING_FOLDER_PATH/Contents/Resources/python-stdlib/lib-dynload\"\n/usr/bin/codesign --force --sign \"$EXPANDED_CODE_SIGN_IDENTITY\" --options runtime --timestamp=none --preserve-metadata=identifier,entitlements,flags --generate-entitlement-der *.so\n\n\n# echo \"Signing contents of $CODESIGNING_FOLDER_PATH/Contents/Resources/site-packages as $EXPANDED_CODE_SIGN_IDENTITY_NAME ($EXPANDED_CODE_SIGN_IDENTITY)\"\n# cd \"$CODESIGNING_FOLDER_PATH/Contents/Resources/site-packages\"\n\n# find . -name \".so\" -exec /usr/bin/codesign --force --sign \"$EXPANDED_CODE_SIGN_IDENTITY\" --options runtime --timestamp=none --preserve-metadata=identifier,entitlements,flags --generate-entitlement-der {} \\;\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		0F3EE75F2D40E13F00A1CBC2 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -335,6 +405,7 @@
 				0F3EE8372D414C5600A1CBC2 /* LogManager.swift in Sources */,
 				0F3EE8382D414C5600A1CBC2 /* Yolo_MarkerApp.swift in Sources */,
 				0F3EE8392D414C5600A1CBC2 /* ScreenCaptureManager.swift in Sources */,
+				0F981FF02D4511E10002119C /* PythonManager.swift in Sources */,
 				0F3EE83A2D414C5600A1CBC2 /* BoundingBoxView.swift in Sources */,
 				0F3EE83B2D414C5600A1CBC2 /* ObjectTracker.swift in Sources */,
 				0F983B722D44E3630002119C /* Color+hex.swift in Sources */,
@@ -513,6 +584,7 @@
 				DEVELOPMENT_TEAM = G69P92F3KV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = YOLOverlay/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = YOLOverlay;
@@ -520,6 +592,58 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/site-packages/cv2/.dylibs",
+					"$(PROJECT_DIR)/site-packages/PIL/.dylibs",
+					"$(PROJECT_DIR)/site-packages/numpy/random/lib",
+					"$(PROJECT_DIR)/site-packages/torch/lib",
+					"$(PROJECT_DIR)/site-packages/torchvision/.dylibs",
+					"$(PROJECT_DIR)/site-packages/google/_upb",
+					"$(PROJECT_DIR)/site-packages/scipy/special",
+					"$(PROJECT_DIR)/site-packages/numpy/.dylibs",
+					"$(PROJECT_DIR)/site-packages/numpy/core/lib",
+					"$(PROJECT_DIR)/site-packages/scipy/.dylibs",
+					"$(PROJECT_DIR)/site-packages/scipy/optimize/_highspy",
+					"$(PROJECT_DIR)/site-packages/coremltools",
+					"$(PROJECT_DIR)/python-macos/site-packages/cv2/.dylibs",
+					"$(PROJECT_DIR)/python-macos/site-packages/PIL/.dylibs",
+					"$(PROJECT_DIR)/python-macos/site-packages/torchvision/.dylibs",
+					"$(PROJECT_DIR)/python-macos/site-packages/coremltools",
+					"$(PROJECT_DIR)/python-macos/site-packages/torch/lib",
+					"$(PROJECT_DIR)/python-macos/site-packages/numpy/core/lib",
+					"$(PROJECT_DIR)/python-macos/site-packages/scipy/special",
+					"$(PROJECT_DIR)/python-macos/site-packages/numpy/.dylibs",
+					"$(PROJECT_DIR)/python-macos/site-packages/scipy/.dylibs",
+					"$(PROJECT_DIR)/python-macos/site-packages/google/_upb",
+					"$(PROJECT_DIR)/python-macos/site-packages/scipy/optimize/_highspy",
+					"$(PROJECT_DIR)/python-macos/site-packages/numpy/random/lib",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/numpy/_core/lib",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/numpy/random/lib",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/google/_upb",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/PIL/.dylibs",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/numpy/.dylibs",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/numpy/core/lib",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/scipy/.dylibs",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/scipy/optimize/_highspy",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/scipy/special",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/cv2/.dylibs",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/torch/lib",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/coremltools",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/torchvision/.dylibs",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/PIL/.dylibs",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/coremltools",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/cv2/.dylibs",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/google/_upb",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/numpy/.dylibs",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/numpy/core/lib",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/numpy/random/lib",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/scipy/.dylibs",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/scipy/optimize/_highspy",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/scipy/special",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/torch/lib",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/torchvision/.dylibs",
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kazazes.YOLOverlay;
@@ -543,6 +667,7 @@
 				DEVELOPMENT_TEAM = G69P92F3KV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = YOLOverlay/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = YOLOverlay;
@@ -550,6 +675,58 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/site-packages/cv2/.dylibs",
+					"$(PROJECT_DIR)/site-packages/PIL/.dylibs",
+					"$(PROJECT_DIR)/site-packages/numpy/random/lib",
+					"$(PROJECT_DIR)/site-packages/torch/lib",
+					"$(PROJECT_DIR)/site-packages/torchvision/.dylibs",
+					"$(PROJECT_DIR)/site-packages/google/_upb",
+					"$(PROJECT_DIR)/site-packages/scipy/special",
+					"$(PROJECT_DIR)/site-packages/numpy/.dylibs",
+					"$(PROJECT_DIR)/site-packages/numpy/core/lib",
+					"$(PROJECT_DIR)/site-packages/scipy/.dylibs",
+					"$(PROJECT_DIR)/site-packages/scipy/optimize/_highspy",
+					"$(PROJECT_DIR)/site-packages/coremltools",
+					"$(PROJECT_DIR)/python-macos/site-packages/cv2/.dylibs",
+					"$(PROJECT_DIR)/python-macos/site-packages/PIL/.dylibs",
+					"$(PROJECT_DIR)/python-macos/site-packages/torchvision/.dylibs",
+					"$(PROJECT_DIR)/python-macos/site-packages/coremltools",
+					"$(PROJECT_DIR)/python-macos/site-packages/torch/lib",
+					"$(PROJECT_DIR)/python-macos/site-packages/numpy/core/lib",
+					"$(PROJECT_DIR)/python-macos/site-packages/scipy/special",
+					"$(PROJECT_DIR)/python-macos/site-packages/numpy/.dylibs",
+					"$(PROJECT_DIR)/python-macos/site-packages/scipy/.dylibs",
+					"$(PROJECT_DIR)/python-macos/site-packages/google/_upb",
+					"$(PROJECT_DIR)/python-macos/site-packages/scipy/optimize/_highspy",
+					"$(PROJECT_DIR)/python-macos/site-packages/numpy/random/lib",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/numpy/_core/lib",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/numpy/random/lib",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/google/_upb",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/PIL/.dylibs",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/numpy/.dylibs",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/numpy/core/lib",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/scipy/.dylibs",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/scipy/optimize/_highspy",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/scipy/special",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/cv2/.dylibs",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/torch/lib",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/coremltools",
+					"$(PROJECT_DIR)/python-macos/.venv/lib/python3.11/site-packages/torchvision/.dylibs",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/PIL/.dylibs",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/coremltools",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/cv2/.dylibs",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/google/_upb",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/numpy/.dylibs",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/numpy/core/lib",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/numpy/random/lib",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/scipy/.dylibs",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/scipy/optimize/_highspy",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/scipy/special",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/torch/lib",
+					"$(PROJECT_DIR)/python-macos/python-stdlib/site-packages/torchvision/.dylibs",
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kazazes.YOLOverlay;
@@ -667,6 +844,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0F983B7C2D4504410002119C /* XCRemoteSwiftPackageReference "PythonKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pvieito/PythonKit";
+			requirement = {
+				kind = exactVersion;
+				version = 0.5.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0F983B7D2D4504410002119C /* PythonKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0F983B7C2D4504410002119C /* XCRemoteSwiftPackageReference "PythonKit" */;
+			productName = PythonKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 0F3EE75B2D40E13F00A1CBC2 /* Project object */;
 }

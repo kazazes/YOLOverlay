@@ -1,5 +1,7 @@
 import AppKit
 import Combine
+import Python
+import PythonKit
 import SwiftUI
 
 @MainActor
@@ -12,6 +14,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   private var cancellables = Set<AnyCancellable>()
 
   func applicationDidFinishLaunching(_ notification: Notification) {
+    // Initialize Python
+    do {
+      try PythonManager.shared.initialize()
+    } catch {
+      fatalError("Failed to initialize Python: \(error)")
+    }
+
     // Create status item
     statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
@@ -51,6 +60,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   func applicationWillTerminate(_ notification: Notification) {
+    // Clean up Python interpreter
+    PythonManager.shared.cleanup()
+
     // Save log window state
     UserDefaults.standard.set(
       logWindowController?.window?.isVisible ?? false, forKey: "LogWindowVisible")
