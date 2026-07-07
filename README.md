@@ -87,6 +87,24 @@
 3. Monitor performance with ⌘L
 4. Filter and customize as needed
 
+## 🛠️ Developer Quickstart
+
+1. Clone this repo
+2. Open in Xcode, assign your team/developer ID
+3. Use `./convert_yolo.py ..` as per below, fetch and convert all requisite .mlpackage
+  ```bash
+  # to fetch all requisite `.mlpackage` for the project to build
+  ./convert_yolo.py v8 l
+  ./convert_yolo.py v8 x
+  ./convert_yolo.py 11 s
+  ./convert_yolo.py 11 l
+  ./convert_yolo.py 11 x
+
+  # Note: these downloads are large, you can also remove a reference in Xcode
+  ```
+4. Hit run in Xcode
+5. Get first place on macOS 😎
+
 ## 🤖 Adding Custom Models
 
 YOLOverlay supports YOLO models in CoreML format (`.mlpackage`). To add a new model:
